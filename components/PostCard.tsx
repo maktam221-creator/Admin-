@@ -1,31 +1,53 @@
-import React, { useState, useCallback } from 'react';
-import { Heart, MessageCircle, Share2, Send, MoreHorizontal } from 'lucide-react';
-import { Post, Comment } from '../types';
-import { Button } from './Button';
+import React, { useState } from 'react';
+import { Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Post } from '../types';
 
 interface PostCardProps {
   post: Post;
   currentUserAvatar: string;
+  currentUserId: string;
   onLike: (postId: string) => void;
   onComment: (postId: string, text: string) => void;
   onShare: (postId: string) => void;
+  onDelete: (postId: string) => void;
+  onEdit: (postId: string, newContent: string) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ 
   post, 
   currentUserAvatar,
+  currentUserId,
   onLike, 
   onComment,
-  onShare
+  onShare,
+  onDelete,
+  onEdit
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+
+  const isOwner = currentUserId === post.user.id;
 
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
     onComment(post.id, newComment);
     setNewComment('');
+  };
+
+  const handleSaveEdit = () => {
+    if (editContent.trim() && editContent !== post.content) {
+      onEdit(post.id, editContent);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditContent(post.content);
+    setIsEditing(false);
   };
 
   const formatDate = (timestamp: number) => {
@@ -38,7 +60,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   };
 
   return (
-    <article className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden animate-fade-in">
+    <article className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-visible animate-fade-in relative">
       {/* Post Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -52,20 +74,81 @@ export const PostCard: React.FC<PostCardProps> = ({
             <p className="text-xs text-gray-500">{formatDate(post.timestamp)}</p>
           </div>
         </div>
-        <button className="text-gray-400 hover:text-gray-600">
-          <MoreHorizontal size={20} />
-        </button>
+        
+        {isOwner && (
+          <div className="relative">
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-50 transition-colors"
+            >
+              <MoreHorizontal size={20} />
+            </button>
+            
+            {showMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowMenu(false)} 
+                />
+                <div className="absolute left-0 top-full mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  <button 
+                    onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                    className="w-full text-right px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                  >
+                    <Edit2 size={16} />
+                    تعديل
+                  </button>
+                  <button 
+                    onClick={() => { setShowMenu(false); onDelete(post.id); }}
+                    className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50"
+                  >
+                    <Trash2 size={16} />
+                    حذف
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Post Content */}
       <div className="px-4 pb-2">
-        <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap" dir="auto">
-          {post.content}
-        </p>
+        {isEditing ? (
+          <div className="animate-in fade-in">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full p-3 min-h-[120px] border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-blue-50/30 text-base"
+              dir="auto"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button 
+                onClick={handleCancelEdit}
+                className="px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1 transition-colors"
+              >
+                <X size={16} />
+                إلغاء
+              </button>
+              <button 
+                onClick={handleSaveEdit}
+                className="px-4 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg flex items-center gap-1 transition-colors shadow-sm"
+              >
+                <Check size={16} />
+                حفظ
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap" dir="auto">
+            {post.content}
+          </p>
+        )}
       </div>
 
       {/* Post Image */}
-      {post.image && (
+      {post.image && !isEditing && (
         <div className="mt-2 w-full">
           <img 
             src={post.image} 
@@ -76,7 +159,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       )}
 
       {/* Post Stats */}
-      <div className="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-b border-gray-50">
+      <div className="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-b border-gray-50 mt-2">
         <div className="flex gap-1">
           {post.likes > 0 && <span>{post.likes} إعجاب</span>}
         </div>

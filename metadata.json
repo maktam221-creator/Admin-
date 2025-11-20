@@ -1,5 +1,5 @@
 {
-  "name": "منصتي (MyPlatform)",
+  "name": "admin",
   "description": "تطبيق تواصل اجتماعي متكامل يدعم النشر، الإعجاب، التعليق، والمشاركة مع مساعد ذكاء اصطناعي لتحسين المنشورات.",
   "requestFramePermissions": [
     "camera"
