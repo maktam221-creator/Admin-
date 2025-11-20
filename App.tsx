@@ -1,14 +1,25 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { PostCard } from './components/PostCard';
 import { CreatePost } from './components/CreatePost';
 import { Post, User } from './types';
-import { Bell, Menu, Home, User as UserIcon, AlertTriangle, Search, UserPlus, UserMinus, Check, Heart, MessageCircle, Share2 } from 'lucide-react';
+import { 
+  Bell, Menu, Home, User as UserIcon, AlertTriangle, Search, 
+  UserPlus, UserMinus, Check, Heart, MessageCircle, Share2, 
+  MapPin, Briefcase, GraduationCap, Camera, X 
+} from 'lucide-react';
 
-// Mock Current User
-const CURRENT_USER: User = {
+// Initial Mock Data for Current User
+const INITIAL_USER: User = {
   id: 'curr_user_1',
   name: 'أحمد محمد',
   avatar: 'https://picsum.photos/id/64/200/200',
+  username: 'ahmed_mo',
+  bio: 'مطور واجهات أمامية شغوف بالتكنولوجيا والذكاء الاصطناعي.',
+  country: 'مصر',
+  gender: 'ذكر',
+  job: 'مطور برمجيات',
+  qualification: 'بكالوريوس علوم حاسب'
 };
 
 // Notification Interface
@@ -47,7 +58,7 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
   }
 ];
 
-// Initial Mock Data
+// Initial Mock Data for Posts
 const INITIAL_POSTS: Post[] = [
   {
     id: '1',
@@ -88,9 +99,13 @@ const INITIAL_POSTS: Post[] = [
 ];
 
 const App: React.FC = () => {
+  // Main State
+  const [currentUser, setCurrentUser] = useState<User>(INITIAL_USER);
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
   const [view, setView] = useState<'home' | 'profile' | 'user_profile'>('home');
   const [viewedUser, setViewedUser] = useState<User | null>(null);
+  
+  // Interaction State
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -100,22 +115,39 @@ const App: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   
   // Follow logic states
+  const [followedUsers, setFollowedUsers] = useState<string[]>([]);
   const [showFollowModal, setShowFollowModal] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
+
+  // Edit Profile State
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<User>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+  const isViewedUserFollowed = viewedUser ? followedUsers.includes(viewedUser.id) : false;
 
-  // Toast helper
+  // Helper Functions
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const getTimeAgo = (timestamp: number) => {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return 'منذ لحظات';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `منذ ${minutes} د`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `منذ ${hours} س`;
+    return 'منذ يوم';
+  };
+
+  // Post Actions
   const handleCreatePost = (text: string, image: string | null) => {
     const newPost: Post = {
       id: Date.now().toString(),
-      user: CURRENT_USER,
+      user: currentUser,
       content: text,
       image: image || undefined,
       likes: 0,
@@ -125,6 +157,7 @@ const App: React.FC = () => {
       timestamp: Date.now(),
     };
     setPosts([newPost, ...posts]);
+    showToast('تم نشر المنشور بنجاح');
   };
 
   const handleLike = (postId: string) => {
@@ -145,7 +178,7 @@ const App: React.FC = () => {
       if (post.id === postId) {
         const newComment = {
           id: Date.now().toString(),
-          user: CURRENT_USER,
+          user: currentUser,
           text,
           timestamp: Date.now()
         };
@@ -162,7 +195,6 @@ const App: React.FC = () => {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    // Increment share count
     setPosts(posts.map(p => {
       if (p.id === postId) {
         return { ...p, shares: p.shares + 1 };
@@ -173,14 +205,13 @@ const App: React.FC = () => {
     const shareData = {
       title: `منشور بواسطة ${post.user.name}`,
       text: post.content,
-      url: window.location.href // In a real app this would be the specific post URL
+      url: window.location.href
     };
 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        // Fallback for desktop
         await navigator.clipboard.writeText(`${shareData.text}\n\n${shareData.url}`);
         showToast('تم نسخ المنشور للحافظة بنجاح');
       }
@@ -211,63 +242,80 @@ const App: React.FC = () => {
     showToast('تم تعديل المنشور بنجاح');
   };
 
+  // User Navigation & Follow
   const handleUserClick = (user: User) => {
-    if (user.id === CURRENT_USER.id) {
+    if (user.id === currentUser.id) {
       setView('profile');
       setViewedUser(null);
     } else {
       setViewedUser(user);
-      setIsFollowing(false); // Reset follow state for demo when viewing a new user
       setView('user_profile');
     }
     window.scrollTo(0, 0);
   };
 
-  const handleFollowClick = () => {
-    setShowFollowModal(true);
-  };
-
-  const handleUnfollowClick = () => {
-    setShowUnfollowModal(true);
-  };
+  const handleFollowClick = () => setShowFollowModal(true);
+  const handleUnfollowClick = () => setShowUnfollowModal(true);
 
   const confirmFollow = () => {
-    setIsFollowing(true);
-    setShowFollowModal(false);
     if (viewedUser) {
+      setFollowedUsers([...followedUsers, viewedUser.id]);
+      setShowFollowModal(false);
       showToast(`بدأت متابعة ${viewedUser.name}`);
     }
   };
 
   const confirmUnfollow = () => {
-    setIsFollowing(false);
-    setShowUnfollowModal(false);
     if (viewedUser) {
+      setFollowedUsers(followedUsers.filter(id => id !== viewedUser.id));
+      setShowUnfollowModal(false);
       showToast(`ألغيت متابعة ${viewedUser.name}`);
     }
   };
 
+  // Profile Editing
+  const handleEditProfileClick = () => {
+    setEditFormData({ ...currentUser });
+    setShowEditProfileModal(true);
+  };
+
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditFormData(prev => ({ ...prev, avatar: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const saveProfileChanges = () => {
+    if (editFormData) {
+      const updatedUser = { ...currentUser, ...editFormData } as User;
+      setCurrentUser(updatedUser);
+      
+      // Update posts by current user to reflect changes
+      setPosts(posts.map(post => 
+        post.user.id === currentUser.id ? { ...post, user: updatedUser } : post
+      ));
+      
+      setShowEditProfileModal(false);
+      showToast('تم تحديث الملف الشخصي بنجاح');
+    }
+  };
+
+  // Notifications
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
     if (!showNotifications && unreadNotificationsCount > 0) {
-      // Mark all as read when opening
       setNotifications(notifications.map(n => ({ ...n, read: true })));
     }
   };
 
-  const getTimeAgo = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return 'منذ لحظات';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `منذ ${minutes} د`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `منذ ${hours} س`;
-    return 'منذ يوم';
-  };
-
-  // Filter logic
+  // View Filtering
   const postsForView = view === 'profile' 
-    ? posts.filter(post => post.user.id === CURRENT_USER.id)
+    ? posts.filter(post => post.user.id === currentUser.id)
     : view === 'user_profile' && viewedUser
       ? posts.filter(post => post.user.id === viewedUser.id)
       : posts;
@@ -281,7 +329,6 @@ const App: React.FC = () => {
       {/* Navigation Bar */}
       <nav className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3 md:gap-4">
-          {/* Brand */}
           <div 
             className="flex items-center cursor-pointer shrink-0"
             onClick={() => setView('home')}
@@ -289,7 +336,6 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-extrabold text-blue-600 tracking-tight font-sans">Meydan</h1>
           </div>
 
-          {/* Search Bar */}
           <div className="flex-1 relative max-w-md mx-1">
             <input 
               type="text"
@@ -301,7 +347,6 @@ const App: React.FC = () => {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
           </div>
           
-          {/* Desktop Tabs */}
           <div className="hidden md:flex items-center gap-2 shrink-0">
             <button 
               onClick={() => setView('home')}
@@ -323,9 +368,7 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-3 shrink-0">
-            {/* Notification Bell & Dropdown */}
             <div className="relative">
               <button 
                 onClick={toggleNotifications}
@@ -414,7 +457,7 @@ const App: React.FC = () => {
             </button>
             <button onClick={() => setView('profile')} className="hidden md:block">
               <img 
-                src={CURRENT_USER.avatar} 
+                src={currentUser.avatar} 
                 alt="Profile" 
                 className={`w-9 h-9 rounded-full border-2 shadow-sm transition-colors ${
                   view === 'profile' ? 'border-blue-500' : 'border-white'
@@ -434,35 +477,68 @@ const App: React.FC = () => {
             <div className="h-32 bg-gradient-to-r from-blue-600 to-blue-400"></div>
             <div className="px-6 pb-6">
               <div className="relative flex justify-between items-end -mt-12 mb-6">
-                <div className="relative">
+                <div className="relative group">
                   <img 
-                    src={CURRENT_USER.avatar} 
-                    alt={CURRENT_USER.name}
+                    src={currentUser.avatar} 
+                    alt={currentUser.name}
                     className="w-24 h-24 rounded-full border-4 border-white bg-white object-cover"
                   />
-                  <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
+                  <button 
+                    onClick={handleEditProfileClick}
+                    className="absolute bottom-0 right-0 p-1.5 bg-blue-600 text-white rounded-full border-2 border-white shadow-sm hover:bg-blue-700 transition-colors"
+                  >
+                    <Camera size={14} />
+                  </button>
                 </div>
-                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-colors">
+                <button 
+                  onClick={handleEditProfileClick}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-colors"
+                >
                   تعديل الملف الشخصي
                 </button>
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{CURRENT_USER.name}</h2>
-                <p className="text-gray-500">@ahmed_mo • مطور واجهات أمامية</p>
+                <h2 className="text-2xl font-bold text-gray-900">{currentUser.name}</h2>
+                <p className="text-gray-500">@{currentUser.username || 'user'} • {currentUser.job || 'عضو في ميدان'}</p>
+                
+                {currentUser.bio && (
+                  <p className="mt-3 text-gray-700 text-sm leading-relaxed">{currentUser.bio}</p>
+                )}
+
+                <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                  {currentUser.country && (
+                    <div className="flex items-center gap-1">
+                      <MapPin size={16} className="text-gray-400" />
+                      <span>{currentUser.country}</span>
+                    </div>
+                  )}
+                  {currentUser.qualification && (
+                    <div className="flex items-center gap-1">
+                      <GraduationCap size={16} className="text-gray-400" />
+                      <span>{currentUser.qualification}</span>
+                    </div>
+                  )}
+                  {currentUser.gender && (
+                    <div className="flex items-center gap-1">
+                      <UserIcon size={16} className="text-gray-400" />
+                      <span>{currentUser.gender}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-6 mt-6 py-4 border-t border-gray-50">
                 <div className="text-center">
-                  <div className="font-bold text-gray-900">{posts.filter(p => p.user.id === CURRENT_USER.id).length}</div>
+                  <div className="font-bold text-gray-900">{posts.filter(p => p.user.id === currentUser.id).length}</div>
                   <div className="text-xs text-gray-500">منشور</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-gray-900">1.2k</div>
+                  <div className="font-bold text-gray-900">{1200 + followedUsers.length}</div>
                   <div className="text-xs text-gray-500">متابِع</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-gray-900">234</div>
+                  <div className="font-bold text-gray-900">{234 + followedUsers.length}</div>
                   <div className="text-xs text-gray-500">متابَع</div>
                 </div>
               </div>
@@ -487,14 +563,14 @@ const App: React.FC = () => {
                   />
                 </div>
                 <button 
-                  onClick={isFollowing ? handleUnfollowClick : handleFollowClick}
+                  onClick={isViewedUserFollowed ? handleUnfollowClick : handleFollowClick}
                   className={`px-6 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    isFollowing 
+                    isViewedUserFollowed 
                       ? 'bg-gray-100 text-green-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-transparent'
                       : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
                   }`}
                 >
-                  {isFollowing ? (
+                  {isViewedUserFollowed ? (
                     <>
                       <Check size={16} />
                       <span>تتابعه</span>
@@ -537,11 +613,11 @@ const App: React.FC = () => {
         {view === 'home' && !searchQuery && (
           <>
             <div className="md:hidden mb-6">
-              <h2 className="text-lg font-bold text-gray-800">مرحباً، {CURRENT_USER.name} 👋</h2>
+              <h2 className="text-lg font-bold text-gray-800">مرحباً، {currentUser.name} 👋</h2>
               <p className="text-gray-500 text-sm">إليك آخر المستجدات من مجتمعك.</p>
             </div>
             <CreatePost 
-              currentUserAvatar={CURRENT_USER.avatar}
+              currentUserAvatar={currentUser.avatar}
               onPostCreate={handleCreatePost}
             />
           </>
@@ -560,8 +636,8 @@ const App: React.FC = () => {
             <PostCard
               key={post.id}
               post={post}
-              currentUserAvatar={CURRENT_USER.avatar}
-              currentUserId={CURRENT_USER.id}
+              currentUserAvatar={currentUser.avatar}
+              currentUserId={currentUser.id}
               onLike={handleLike}
               onComment={handleComment}
               onShare={handleShare}
@@ -717,6 +793,143 @@ const App: React.FC = () => {
                 className="flex-1 py-3.5 text-red-600 font-bold hover:bg-red-50 transition-colors text-sm"
               >
                 نعم، إلغاء المتابعة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-gray-800 text-lg">تعديل الملف الشخصي</h3>
+              <button 
+                onClick={() => setShowEditProfileModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto scrollbar-thin">
+              {/* Avatar Upload */}
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  <img 
+                    src={editFormData.avatar || currentUser.avatar} 
+                    alt="Avatar Preview" 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-gray-100"
+                  />
+                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="text-white" size={24} />
+                  </div>
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                />
+                <p className="text-xs text-gray-500 mt-2">اضغط لتغيير الصورة</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.name || ''}
+                      onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">اسم المستخدم (بدون @)</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.username || ''}
+                      onChange={(e) => setEditFormData({...editFormData, username: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الوظيفة</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.job || ''}
+                      onChange={(e) => setEditFormData({...editFormData, job: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                      placeholder="مثال: مهندس برمجيات"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">الدولة</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.country || ''}
+                      onChange={(e) => setEditFormData({...editFormData, country: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                      placeholder="مثال: مصر"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">المؤهل العلمي</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.qualification || ''}
+                      onChange={(e) => setEditFormData({...editFormData, qualification: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">النوع</label>
+                    <select 
+                      value={editFormData.gender || ''}
+                      onChange={(e) => setEditFormData({...editFormData, gender: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white"
+                    >
+                      <option value="">اختر...</option>
+                      <option value="ذكر">ذكر</option>
+                      <option value="أنثى">أنثى</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">نبذة تعريفية</label>
+                  <textarea 
+                    value={editFormData.bio || ''}
+                    onChange={(e) => setEditFormData({...editFormData, bio: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm min-h-[80px] resize-none"
+                    placeholder="اكتب شيئاً عن نفسك..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+              <button 
+                onClick={() => setShowEditProfileModal(false)}
+                className="px-5 py-2 text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={saveProfileChanges}
+                className="px-5 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold transition-colors shadow-sm"
+              >
+                حفظ التغييرات
               </button>
             </div>
           </div>

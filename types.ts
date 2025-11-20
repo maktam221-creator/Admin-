@@ -1,7 +1,14 @@
+
 export interface User {
   id: string;
   name: string;
   avatar: string;
+  username?: string;
+  bio?: string;
+  country?: string;
+  gender?: string;
+  qualification?: string;
+  job?: string;
 }
 
 export interface Comment {
