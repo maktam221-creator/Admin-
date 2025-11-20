@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2, Edit2, X, Check } from 'lucide-react';
-import { Post } from '../types';
+import { Post, User } from '../types';
 
 interface PostCardProps {
   post: Post;
@@ -11,6 +11,7 @@ interface PostCardProps {
   onShare: (postId: string) => void;
   onDelete: (postId: string) => void;
   onEdit: (postId: string, newContent: string) => void;
+  onUserClick: (user: User) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ 
@@ -21,7 +22,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   onComment,
   onShare,
   onDelete,
-  onEdit
+  onEdit,
+  onUserClick
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -63,14 +65,17 @@ export const PostCard: React.FC<PostCardProps> = ({
     <article className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-visible animate-fade-in relative">
       {/* Post Header */}
       <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div 
+          className="flex items-center gap-3 cursor-pointer group"
+          onClick={() => onUserClick(post.user)}
+        >
           <img 
             src={post.user.avatar} 
             alt={post.user.name} 
-            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+            className="w-10 h-10 rounded-full object-cover border border-gray-200 group-hover:border-blue-400 transition-colors"
           />
           <div>
-            <h3 className="font-bold text-gray-900 text-sm md:text-base">{post.user.name}</h3>
+            <h3 className="font-bold text-gray-900 text-sm md:text-base group-hover:text-blue-600 transition-colors">{post.user.name}</h3>
             <p className="text-xs text-gray-500">{formatDate(post.timestamp)}</p>
           </div>
         </div>
@@ -234,10 +239,16 @@ export const PostCard: React.FC<PostCardProps> = ({
                   src={comment.user.avatar} 
                   alt={comment.user.name} 
                   className="w-8 h-8 rounded-full object-cover mt-1"
+                  onClick={() => onUserClick(comment.user)}
                 />
                 <div className="bg-white p-3 rounded-2xl rounded-tr-none shadow-sm border border-gray-100 flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-gray-900">{comment.user.name}</span>
+                    <span 
+                      className="font-bold text-xs text-gray-900 cursor-pointer hover:text-blue-600"
+                      onClick={() => onUserClick(comment.user)}
+                    >
+                      {comment.user.name}
+                    </span>
                     <span className="text-[10px] text-gray-400">{formatDate(comment.timestamp)}</span>
                   </div>
                   <p className="text-sm text-gray-700">{comment.text}</p>
