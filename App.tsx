@@ -10,7 +10,7 @@ import {
   UserPlus, UserMinus, Check, Heart, MessageCircle, Share2, 
   MapPin, Briefcase, GraduationCap, Camera, X, MessageSquare, ChevronRight,
   Filter, Settings, LogOut, Moon, Shield, Lock, Info, ChevronLeft, Smartphone, Mail, Eye, EyeOff, Globe, HelpCircle, Ban, Flag,
-  ArrowRight, Edit2, Trash2, Repeat, AlertTriangle
+  ArrowRight, Edit2, Trash2, Repeat, AlertTriangle, UserCheck
 } from 'lucide-react';
 
 // Initial Mock Data for Current User
@@ -386,7 +386,8 @@ function App() {
   const confirmBlock = () => {
     if (userToBlock) {
       setBlockedUsers([...blockedUsers, userToBlock]);
-      setPosts(posts.filter(p => p.user.id !== userToBlock.id));
+      // NOTE: We do NOT remove posts from 'posts' state permanently.
+      // The 'filteredPosts' logic will hide them. This allows unblocking to restore posts.
       showToast(`تم حظر ${userToBlock.name}`);
       setShowBlockModal(false);
       setUserToBlock(null);
@@ -548,8 +549,17 @@ function App() {
                 <input 
                   type="checkbox" 
                   checked={currentUser.privacySettings?.isPrivate}
-                  onChange={() => {/* Toggle logic */}}
-                  className="w-5 h-5 text-blue-600"
+                  onChange={() => {
+                    const newStatus = !currentUser.privacySettings?.isPrivate;
+                    updateUserStats(currentUser.id, {
+                      privacySettings: {
+                        ...currentUser.privacySettings!,
+                        isPrivate: newStatus
+                      }
+                    });
+                    showToast(newStatus ? "تم تفعيل الحساب الخاص" : "تم تحويل الحساب إلى عام");
+                  }}
+                  className="w-5 h-5 text-blue-600 cursor-pointer"
                 />
               </div>
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -560,27 +570,46 @@ function App() {
                 <input 
                   type="checkbox" 
                   checked={currentUser.privacySettings?.showActivityStatus}
-                  onChange={() => {/* Toggle logic */}}
-                  className="w-5 h-5 text-blue-600"
+                  onChange={() => {
+                    const newStatus = !currentUser.privacySettings?.showActivityStatus;
+                    updateUserStats(currentUser.id, {
+                      privacySettings: {
+                        ...currentUser.privacySettings!,
+                        showActivityStatus: newStatus
+                      }
+                    });
+                    showToast(newStatus ? "تم تفعيل حالة النشاط" : "تم إخفاء حالة النشاط");
+                  }}
+                  className="w-5 h-5 text-blue-600 cursor-pointer"
                 />
               </div>
               
-              <div className="mt-6">
-                <h4 className="font-bold mb-3 text-sm text-gray-500">المستخدمون المحظورون</h4>
+              {/* Blocked Users Section */}
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <h4 className="font-bold mb-3 text-sm text-gray-800 flex items-center gap-2">
+                  <Ban size={16} className="text-red-500" />
+                  المستخدمون المحظورون
+                </h4>
                 {blockedUsers.length === 0 ? (
-                  <p className="text-sm text-gray-400">لا يوجد مستخدمين محظورين.</p>
+                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                     <p className="text-sm text-gray-400">لا يوجد مستخدمين محظورين.</p>
+                  </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {blockedUsers.map(u => (
-                      <div key={u.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                        <div className="flex items-center gap-2">
-                          <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full" />
-                          <span className="text-sm font-medium">{u.name}</span>
+                      <div key={u.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <img src={u.avatar} alt={u.name} className="w-10 h-10 rounded-full object-cover" />
+                          <div>
+                             <span className="text-sm font-bold text-gray-900 block">{u.name}</span>
+                             <span className="text-xs text-gray-400 block">@{u.username}</span>
+                          </div>
                         </div>
                         <button 
                           onClick={() => handleUnblock(u.id)}
-                          className="text-xs bg-white text-red-600 px-3 py-1 rounded border border-red-200 hover:bg-red-50"
+                          className="flex items-center gap-1 text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-full border border-red-100 hover:bg-red-100 transition-colors"
                         >
+                          <UserCheck size={14} />
                           إلغاء الحظر
                         </button>
                       </div>
@@ -843,463 +872,412 @@ function App() {
         {/* View Routing */}
         {view === 'settings' ? (
            <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6 min-h-[500px]">
-             <h2 className="text-2xl font-bold text-gray-800 mb-6">الإعدادات</h2>
+             <div className="flex items-center justify-between mb-6">
+               <h2 className="text-2xl font-bold text-gray-800">الإعدادات</h2>
+               <button 
+                 onClick={() => setView('home')} 
+                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                 title="إغلاق"
+               >
+                 <X size={24} />
+               </button>
+             </div>
              {renderSettingsContent()}
            </div>
         ) : view === 'chat' ? (
-          <div className="w-full flex gap-4 h-[calc(100vh-100px)]">
-             {/* Chat List (Desktop) or Mobile List view */}
-             <div className={`w-full md:w-1/3 ${currentChatUser && 'hidden md:block'}`}>
-                <ChatList 
-                  currentUser={currentUser}
-                  messages={messages}
-                  users={users}
-                  onSelectUser={handleMessageUser}
-                />
+             // Chat View
+             <div className="w-full max-w-4xl mx-auto">
+               {currentChatUser ? (
+                 <ChatWindow 
+                   currentUser={currentUser}
+                   otherUser={currentChatUser}
+                   messages={messages.filter(m => 
+                     (m.senderId === currentUser.id && m.receiverId === currentChatUser.id) || 
+                     (m.senderId === currentChatUser.id && m.receiverId === currentUser.id)
+                   )}
+                   onSendMessage={handleSendMessage}
+                   onBack={() => setCurrentChatUser(null)}
+                 />
+               ) : (
+                 <ChatList 
+                   currentUser={currentUser}
+                   messages={messages}
+                   users={users.filter(u => u.id !== currentUser.id)}
+                   onSelectUser={handleMessageUser}
+                 />
+               )}
              </div>
-             {/* Chat Window */}
-             {currentChatUser ? (
-                <div className="w-full md:w-2/3">
-                  <ChatWindow 
-                    currentUser={currentUser}
-                    otherUser={currentChatUser}
-                    messages={messages.filter(m => 
-                      (m.senderId === currentUser.id && m.receiverId === currentChatUser.id) ||
-                      (m.senderId === currentChatUser.id && m.receiverId === currentUser.id)
-                    )}
-                    onSendMessage={handleSendMessage}
-                    onBack={() => setCurrentChatUser(null)}
-                  />
-                </div>
-             ) : (
-                <div className="hidden md:flex w-2/3 bg-white rounded-xl border border-gray-100 items-center justify-center text-gray-400 flex-col gap-4">
-                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                      <MessageSquare size={40} className="text-gray-300" />
-                   </div>
-                   <p>اختر محادثة للبدء</p>
-                </div>
-             )}
-          </div>
         ) : (
           <>
-            {/* Left Sidebar (Desktop) */}
-            <aside className="hidden md:block w-64 flex-shrink-0 space-y-4">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center sticky top-20">
-                <div className="relative w-20 h-20 mx-auto mb-4 group cursor-pointer" onClick={() => setView('profile')}>
-                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full rounded-full object-cover border-2 border-gray-100 group-hover:border-blue-400 transition-all" />
-                  <div className="absolute inset-0 bg-black/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <UserIcon className="text-white" size={24} />
+            {/* Right Sidebar (Desktop Profile) - Only show on home/profile */}
+             <aside className="hidden md:block w-[280px] flex-shrink-0 space-y-4">
+                {/* Profile Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center sticky top-20">
+                  <div className="relative inline-block mb-3">
+                    <img src={currentUser.avatar} alt={currentUser.name} className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 mx-auto" />
+                    <div className="absolute bottom-1 right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
                   </div>
-                </div>
-                <h2 className="font-bold text-lg text-gray-900 mb-1">{currentUser.name}</h2>
-                <p className="text-gray-500 text-sm mb-4 line-clamp-1">{currentUser.bio}</p>
-                
-                <div className="flex justify-center gap-6 mb-6 py-4 border-t border-b border-gray-50">
-                  <div className="text-center">
-                    <span className="block font-bold text-gray-900 text-lg">{currentUser.followers}</span>
-                    <span className="text-xs text-gray-500">متابعون</span>
+                  <h2 className="font-bold text-xl text-gray-900 mb-1">{currentUser.name}</h2>
+                  <p className="text-gray-500 text-sm mb-4">@{currentUser.username}</p>
+                  
+                  <div className="flex justify-center gap-6 mb-6 text-sm">
+                    <div className="text-center">
+                      <div className="font-bold text-gray-900">{currentUser.followers}</div>
+                      <div className="text-gray-400 text-xs">متابِع</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-gray-900">{currentUser.following}</div>
+                      <div className="text-gray-400 text-xs">متابَع</div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <span className="block font-bold text-gray-900 text-lg">{currentUser.following}</span>
-                    <span className="text-xs text-gray-500">يتابع</span>
-                  </div>
-                </div>
-                
-                <button onClick={() => setView('profile')} className="text-blue-600 text-sm font-medium hover:underline">عرض الملف الشخصي</button>
-              </div>
-            </aside>
 
-            {/* Center Feed */}
+                  <div className="space-y-2 text-sm text-gray-600 text-right mb-6">
+                    {currentUser.job && <div className="flex items-center gap-2"><Briefcase size={16} /> {currentUser.job}</div>}
+                    {currentUser.country && <div className="flex items-center gap-2"><MapPin size={16} /> {currentUser.country}</div>}
+                  </div>
+
+                  <button onClick={() => setView('profile')} className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors">
+                    الملف الشخصي
+                  </button>
+                </div>
+             </aside>
+
+            {/* Feed / Main Content */}
             <div className="flex-1 min-w-0">
-              {view === 'home' && (
-                <>
-                  <CreatePost currentUserAvatar={currentUser.avatar} onPostCreate={handleCreatePost} />
-                  <div className="space-y-4">
-                    {filteredPosts.map(post => (
-                      <PostCard 
-                        key={post.id} 
-                        post={post} 
-                        currentUserAvatar={currentUser.avatar}
-                        currentUserId={currentUser.id}
-                        onLike={handleLike}
-                        onComment={handleComment}
-                        onShare={handleShare}
-                        onDelete={handleDelete}
-                        onEdit={handleEditPost}
-                        onRepost={handleRepost}
-                        onUserClick={handleUserClick}
-                        onBlock={handleBlockClick}
-                        onReport={handleReportClick}
-                      />
-                    ))}
-                    {filteredPosts.length === 0 && (
-                       <div className="text-center py-10 text-gray-500">
-                         <Search size={48} className="mx-auto mb-3 text-gray-300" />
-                         <p>لا توجد منشورات تطابق بحثك.</p>
-                       </div>
-                    )}
-                  </div>
-                </>
-              )}
-
+              {/* Profile View Header */}
               {(view === 'profile' || view === 'user_profile') && (
-                <div className="animate-fade-in">
-                   {/* Profile Header */}
-                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6 relative">
-                      <div className="h-32 bg-gradient-to-r from-blue-400 to-purple-500"></div>
-                      <div className="px-6 pb-6">
-                        <div className="flex flex-col md:flex-row items-start md:items-end justify-between -mt-12 mb-6 gap-4">
-                          <div className="flex items-end gap-4">
-                             <img 
-                               src={view === 'profile' ? currentUser.avatar : viewedUser?.avatar} 
-                               alt="Profile" 
-                               className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white object-cover bg-white"
-                             />
-                             <div className="mb-2">
-                               <h2 className="text-2xl font-bold text-gray-900">{view === 'profile' ? currentUser.name : viewedUser?.name}</h2>
-                               <p className="text-gray-500">@{view === 'profile' ? currentUser.username : viewedUser?.username}</p>
-                             </div>
-                          </div>
-                          <div className="flex gap-2 w-full md:w-auto">
-                            {view === 'profile' ? (
+                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 animate-fade-in">
+                    <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600 relative">
+                      {/* Cover Photo */}
+                    </div>
+                    <div className="px-6 pb-6">
+                      <div className="flex justify-between items-end -mt-12 mb-4">
+                         <img 
+                           src={view === 'profile' ? currentUser.avatar : viewedUser?.avatar} 
+                           alt="Profile" 
+                           className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover"
+                         />
+                         {view === 'profile' ? (
+                           <button 
+                             onClick={handleEditProfile}
+                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center gap-2"
+                           >
+                             <Edit2 size={16} />
+                             تعديل
+                           </button>
+                         ) : (
+                           <div className="flex gap-2">
                               <button 
-                                onClick={handleEditProfile}
-                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                                onClick={() => viewedUser && handleMessageUser(viewedUser)}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center gap-2"
                               >
-                                <Edit2 size={18} />
-                                تعديل الملف
+                                <MessageCircle size={16} />
+                                مراسلة
                               </button>
-                            ) : (
-                              <>
+                              {viewedUser && followedUsersIds.includes(viewedUser.id) ? (
                                 <button 
-                                  onClick={() => handleMessageUser(viewedUser!)}
-                                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+                                  onClick={() => viewedUser && handleUnfollowClick(viewedUser)}
+                                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-red-50 hover:text-red-600 transition-colors flex items-center gap-2 group"
                                 >
-                                  <Mail size={18} />
-                                  مراسلة
+                                  <UserCheck size={16} className="group-hover:hidden" />
+                                  <UserMinus size={16} className="hidden group-hover:block" />
+                                  <span className="group-hover:hidden">تتابعه</span>
+                                  <span className="hidden group-hover:inline">إلغاء المتابعة</span>
                                 </button>
-                                {followedUsersIds.includes(viewedUser!.id) ? (
-                                   <button 
-                                     onClick={() => handleUnfollowClick(viewedUser!)}
-                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 text-gray-800 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-transparent rounded-lg font-medium transition-all group"
-                                   >
-                                      <UserMinus size={18} />
-                                      <span className="group-hover:hidden">تتابعه</span>
-                                      <span className="hidden group-hover:inline">إلغاء المتابعة</span>
-                                   </button>
-                                ) : (
-                                  <button 
-                                    onClick={() => handleFollowClick(viewedUser!)}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors shadow-sm"
-                                  >
-                                    <UserPlus size={18} />
-                                    متابعة
-                                  </button>
-                                )}
-                              </>
+                              ) : (
+                                <button 
+                                  onClick={() => viewedUser && handleFollowClick(viewedUser)}
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                >
+                                  <UserPlus size={16} />
+                                  متابعة
+                                </button>
+                              )}
+                           </div>
+                         )}
+                      </div>
+                      
+                      <div className="text-center md:text-right">
+                         <h2 className="text-2xl font-bold text-gray-900">
+                           {view === 'profile' ? currentUser.name : viewedUser?.name}
+                         </h2>
+                         <p className="text-gray-500 text-sm mb-2">
+                           @{view === 'profile' ? currentUser.username : viewedUser?.username}
+                         </p>
+                         <p className="text-gray-700 mb-4">
+                           {view === 'profile' ? currentUser.bio : viewedUser?.bio}
+                         </p>
+                         
+                         {/* User Stats in Profile Header */}
+                         <div className="flex justify-center md:justify-start gap-6 text-sm border-t border-gray-50 pt-4">
+                            <div className="flex items-center gap-1">
+                              <span className="font-bold text-gray-900">{view === 'profile' ? currentUser.followers : viewedUser?.followers}</span>
+                              <span className="text-gray-500">متابِع</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="font-bold text-gray-900">{view === 'profile' ? currentUser.following : viewedUser?.following}</span>
+                              <span className="text-gray-500">متابَع</span>
+                            </div>
+                            {(view === 'profile' ? currentUser.country : viewedUser?.country) && (
+                              <div className="flex items-center gap-1 text-gray-500">
+                                <MapPin size={14} />
+                                <span>{view === 'profile' ? currentUser.country : viewedUser?.country}</span>
+                              </div>
                             )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                           {/* Bio & Details */}
-                           <div className="space-y-2 text-sm text-gray-600">
-                              <p className="text-base text-gray-800 leading-relaxed mb-3">
-                                {view === 'profile' ? currentUser.bio : viewedUser?.bio}
-                              </p>
-                              
-                              {(view === 'profile' ? currentUser.country : viewedUser?.country) && (
-                                <div className="flex items-center gap-2">
-                                  <MapPin size={16} className="text-gray-400" />
-                                  <span>يقيم في <strong>{view === 'profile' ? currentUser.country : viewedUser?.country}</strong></span>
-                                </div>
-                              )}
-                              {(view === 'profile' ? currentUser.job : viewedUser?.job) && (
-                                <div className="flex items-center gap-2">
-                                  <Briefcase size={16} className="text-gray-400" />
-                                  <span>يعمل كـ <strong>{view === 'profile' ? currentUser.job : viewedUser?.job}</strong></span>
-                                </div>
-                              )}
-                               {(view === 'profile' ? currentUser.qualification : viewedUser?.qualification) && (
-                                <div className="flex items-center gap-2">
-                                  <GraduationCap size={16} className="text-gray-400" />
-                                  <span>المؤهل: <strong>{view === 'profile' ? currentUser.qualification : viewedUser?.qualification}</strong></span>
-                                </div>
-                              )}
-                           </div>
-                           
-                           {/* Stats */}
-                           <div className="flex gap-4 justify-start md:justify-end h-fit">
-                              <div className="px-4 py-2 bg-gray-50 rounded-lg text-center min-w-[80px]">
-                                <span className="block font-bold text-lg text-gray-900">
-                                  {view === 'profile' ? currentUser.followers : viewedUser?.followers}
-                                </span>
-                                <span className="text-xs text-gray-500">متابعون</span>
-                              </div>
-                              <div className="px-4 py-2 bg-gray-50 rounded-lg text-center min-w-[80px]">
-                                <span className="block font-bold text-lg text-gray-900">
-                                  {view === 'profile' ? currentUser.following : viewedUser?.following}
-                                </span>
-                                <span className="text-xs text-gray-500">يتابع</span>
-                              </div>
-                              <div className="px-4 py-2 bg-gray-50 rounded-lg text-center min-w-[80px]">
-                                <span className="block font-bold text-lg text-gray-900">
-                                  {posts.filter(p => p.user.id === (view === 'profile' ? currentUser.id : viewedUser?.id)).length}
-                                </span>
-                                <span className="text-xs text-gray-500">منشورات</span>
-                              </div>
-                           </div>
-                        </div>
+                         </div>
                       </div>
-                   </div>
-
-                   {/* Create Post in Profile (Only for Own Profile) */}
-                   {view === 'profile' && (
-                      <div className="mb-6">
-                        <CreatePost currentUserAvatar={currentUser.avatar} onPostCreate={handleCreatePost} />
-                      </div>
-                   )}
-
-                   {/* User's Posts */}
-                   <h3 className="font-bold text-lg text-gray-800 mb-4">المنشورات</h3>
-                   <div className="space-y-4">
-                      {posts
-                        .filter(p => p.user.id === (view === 'profile' ? currentUser.id : viewedUser?.id))
-                        .map(post => (
-                          <PostCard 
-                            key={post.id} 
-                            post={post} 
-                            currentUserAvatar={currentUser.avatar}
-                            currentUserId={currentUser.id}
-                            onLike={handleLike}
-                            onComment={handleComment}
-                            onShare={handleShare}
-                            onDelete={handleDelete}
-                            onEdit={handleEditPost}
-                            onRepost={handleRepost}
-                            onUserClick={handleUserClick}
-                            onBlock={handleBlockClick}
-                            onReport={handleReportClick}
-                          />
-                      ))}
-                      {posts.filter(p => p.user.id === (view === 'profile' ? currentUser.id : viewedUser?.id)).length === 0 && (
-                        <div className="text-center py-12 bg-white rounded-xl border border-gray-100 border-dashed">
-                          <p className="text-gray-400">لا توجد منشورات لعرضها</p>
-                        </div>
-                      )}
-                   </div>
-                </div>
+                    </div>
+                 </div>
               )}
+
+              {/* Create Post (Home & Profile) */}
+              {(view === 'home' || view === 'profile') && (
+                 <CreatePost 
+                   currentUserAvatar={currentUser.avatar}
+                   onPostCreate={handleCreatePost}
+                 />
+              )}
+
+              {/* Posts Feed */}
+              <div className="space-y-4">
+                {filteredPosts.length > 0 ? (
+                  filteredPosts
+                    .filter(post => {
+                       if (view === 'profile') return post.user.id === currentUser.id;
+                       if (view === 'user_profile') return post.user.id === viewedUser?.id;
+                       return true;
+                    })
+                    .map(post => (
+                    <PostCard 
+                      key={post.id}
+                      post={post}
+                      currentUserAvatar={currentUser.avatar}
+                      currentUserId={currentUser.id}
+                      onLike={handleLike}
+                      onComment={handleComment}
+                      onShare={handleShare}
+                      onDelete={handleDelete}
+                      onEdit={handleEditPost}
+                      onRepost={handleRepost}
+                      onUserClick={handleUserClick}
+                      onBlock={handleBlockClick}
+                      onReport={handleReportClick}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-10 text-gray-500">
+                    {searchQuery ? 'لا توجد نتائج للبحث' : 'لا توجد منشورات حالياً'}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 z-50 flex justify-around py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 safe-area-bottom">
         <button 
-          onClick={() => setView('home')}
-          className={`flex flex-col items-center gap-1 ${view === 'home' ? 'text-blue-600' : 'text-gray-500'}`}
+          onClick={() => { setView('home'); window.scrollTo(0,0); }}
+          className={`flex flex-col items-center gap-1 ${view === 'home' ? 'text-blue-600' : 'text-gray-400'}`}
         >
-          <Home size={24} fill={view === 'home' ? "currentColor" : "none"} />
+          <Home size={24} strokeWidth={view === 'home' ? 2.5 : 2} />
           <span className="text-[10px] font-medium">الرئيسية</span>
         </button>
         
         <button 
-          onClick={() => setView('profile')}
-          className={`flex flex-col items-center gap-1 ${view === 'profile' ? 'text-blue-600' : 'text-gray-500'}`}
+           onClick={() => { setView('profile'); window.scrollTo(0,0); }}
+           className={`flex flex-col items-center gap-1 ${view === 'profile' ? 'text-blue-600' : 'text-gray-400'}`}
         >
-          <div className={`rounded-full p-0.5 ${view === 'profile' ? 'ring-2 ring-blue-600' : ''}`}>
-             <img src={currentUser.avatar} alt="" className="w-6 h-6 rounded-full" />
-          </div>
-          <span className="text-[10px] font-medium">الملف الشخصي</span>
+          <UserIcon size={24} strokeWidth={view === 'profile' ? 2.5 : 2} />
+          <span className="text-[10px] font-medium">ملفي</span>
         </button>
-        
+
         <button 
-          onClick={() => { setView('chat'); setCurrentChatUser(null); }}
-          className={`flex flex-col items-center gap-1 ${view === 'chat' ? 'text-blue-600' : 'text-gray-500'}`}
+           onClick={() => { setView('chat'); setCurrentChatUser(null); }}
+           className={`flex flex-col items-center gap-1 ${view === 'chat' ? 'text-blue-600' : 'text-gray-400'}`}
         >
-          <MessageSquare size={24} fill={view === 'chat' ? "currentColor" : "none"} />
+          <MessageSquare size={24} strokeWidth={view === 'chat' ? 2.5 : 2} />
           <span className="text-[10px] font-medium">الرسائل</span>
         </button>
-      </div>
+      </nav>
 
-      {/* --- Modals --- */}
+      {/* --- MODALS --- */}
+      
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogOut size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">تسجيل الخروج</h3>
+            <p className="text-gray-500 mb-6">هل أنت متأكد أنك تريد تسجيل الخروج من الحساب؟</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLogoutModal(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">إلغاء</button>
+              <button onClick={confirmLogout} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">خروج</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Post Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <h3 className="text-xl font-bold text-gray-900 mb-2">حذف المنشور</h3>
+             <p className="text-gray-500 mb-6">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
+             <div className="flex gap-3">
+               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={confirmDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">حذف</button>
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* Follow Modal */}
+      {showFollowModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-blue-100">
+                <img src={userToFollow?.avatar} alt="" className="w-full h-full object-cover" />
+             </div>
+             <h3 className="text-xl font-bold text-gray-900 mb-2">متابعة {userToFollow?.name}؟</h3>
+             <p className="text-gray-500 mb-6">ستظهر منشورات هذا المستخدم في صفحتك الرئيسية.</p>
+             <div className="flex gap-3">
+               <button onClick={() => setShowFollowModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={confirmFollow} className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-medium">متابعة</button>
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* Unfollow Modal */}
+      {showUnfollowModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-red-100 grayscale">
+                <img src={userToUnfollow?.avatar} alt="" className="w-full h-full object-cover" />
+             </div>
+             <h3 className="text-xl font-bold text-gray-900 mb-2">إلغاء متابعة {userToUnfollow?.name}؟</h3>
+             <p className="text-gray-500 mb-6">لن ترى منشورات هذا المستخدم في صفحتك الرئيسية بعد الآن.</p>
+             <div className="flex gap-3">
+               <button onClick={() => setShowUnfollowModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={confirmUnfollow} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">إلغاء المتابعة</button>
+             </div>
+           </div>
+        </div>
+      )}
+      
+      {/* Block Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+               <Ban size={32} />
+             </div>
+             <h3 className="text-xl font-bold text-gray-900 mb-2">حظر {userToBlock?.name}</h3>
+             <p className="text-gray-500 mb-6">لن يتمكن هذا المستخدم من رؤية ملفك الشخصي أو التفاعل معك. سيتم إخفاء محتواه من صفحتك.</p>
+             <div className="flex gap-3">
+               <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={confirmBlock} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">حظر</button>
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+               <Flag size={32} />
+             </div>
+             <h3 className="text-xl font-bold text-gray-900 mb-2">الإبلاغ عن محتوى</h3>
+             <p className="text-gray-500 mb-6">هل أنت متأكد أنك تريد الإبلاغ عن هذا المنشور؟ سيتم مراجعته من قبل الإدارة.</p>
+             <div className="flex gap-3">
+               <button onClick={() => setShowReportModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={confirmReport} className="flex-1 py-2 bg-orange-600 text-white rounded-xl font-medium">إبلاغ</button>
+             </div>
+           </div>
+        </div>
+      )}
 
       {/* Edit Profile Modal */}
       {showEditProfileModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h3 className="font-bold text-lg">تعديل الملف الشخصي</h3>
-              <button onClick={() => setShowEditProfileModal(false)} className="text-gray-500 hover:bg-gray-100 p-1 rounded-full"><X size={20} /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 my-10">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">تعديل الملف الشخصي</h3>
+              <button onClick={() => setShowEditProfileModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
             </div>
-            <div className="p-6 space-y-4">
-               {/* Image Upload Placeholder */}
-               <div className="flex flex-col items-center mb-4">
-                 <div className="relative group cursor-pointer">
-                   <img src={editFormData.avatar || currentUser.avatar} alt="" className="w-24 h-24 rounded-full object-cover border-4 border-gray-50" />
-                   <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                     <Camera className="text-white" />
-                   </div>
-                 </div>
-                 <button className="text-blue-600 text-sm font-medium mt-2">تغيير الصورة</button>
-               </div>
+            
+            <div className="space-y-4">
+              {/* Avatar Upload Simulation */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="relative group cursor-pointer">
+                  <img src={editFormData.avatar || currentUser.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-gray-200" />
+                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="text-white" />
+                  </div>
+                </div>
+                <span className="text-xs text-blue-600 mt-2 font-medium">تغيير الصورة</span>
+              </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
-                    <input 
-                      type="text" 
-                      value={editFormData.name || ''}
-                      onChange={e => setEditFormData({...editFormData, name: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الوظيفة</label>
-                    <input 
-                      type="text" 
-                      value={editFormData.job || ''}
-                      onChange={e => setEditFormData({...editFormData, job: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-               </div>
-               
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
+                <input 
+                  type="text" 
+                  value={editFormData.name || ''} 
+                  onChange={e => setEditFormData({...editFormData, name: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">اسم المستخدم</label>
+                <input 
+                  type="text" 
+                  value={editFormData.username || ''} 
+                  onChange={e => setEditFormData({...editFormData, username: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">النبذة التعريفية (Bio)</label>
-                  <textarea 
-                    value={editFormData.bio || ''}
-                    onChange={e => setEditFormData({...editFormData, bio: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none h-24"
-                  />
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الدولة</label>
-                    <input 
-                      type="text" 
-                      value={editFormData.country || ''}
-                      onChange={e => setEditFormData({...editFormData, country: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">المؤهل</label>
-                    <input 
-                      type="text" 
-                      value={editFormData.qualification || ''}
-                      onChange={e => setEditFormData({...editFormData, qualification: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-               </div>
-            </div>
-            <div className="p-5 border-t border-gray-100 flex gap-3 justify-end bg-gray-50 sticky bottom-0">
-              <button onClick={() => setShowEditProfileModal(false)} className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition-colors">إلغاء</button>
-              <button onClick={saveProfileChanges} className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">حفظ التغييرات</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
-              <Trash2 size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">حذف المنشور؟</h3>
-            <p className="text-gray-500 mb-6">لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في الحذف؟</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">إلغاء</button>
-              <button onClick={confirmDelete} className="flex-1 py-2.5 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">حذف</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-600">
-              <LogOut size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">تسجيل الخروج</h3>
-            <p className="text-gray-500 mb-6">هل أنت متأكد من أنك تريد تسجيل الخروج من حسابك؟</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowLogoutModal(false)} className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">إلغاء</button>
-              <button onClick={confirmLogout} className="flex-1 py-2.5 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">خروج</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Follow Confirmation Modal */}
-      {showFollowModal && userToFollow && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-             <img src={userToFollow.avatar} alt="" className="w-16 h-16 rounded-full mx-auto mb-4 border-4 border-blue-50" />
-            <h3 className="text-lg font-bold text-gray-900 mb-2">متابعة {userToFollow.name}؟</h3>
-            <p className="text-gray-500 mb-6">ستظهر منشوراتهم في صفحتك الرئيسية.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowFollowModal(false)} className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">إلغاء</button>
-              <button onClick={confirmFollow} className="flex-1 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">متابعة</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Unfollow Confirmation Modal */}
-      {showUnfollowModal && userToUnfollow && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-600">
-              <UserMinus size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">إلغاء متابعة {userToUnfollow.name}؟</h3>
-            <p className="text-gray-500 mb-6">لن تظهر منشوراتهم في صفحتك الرئيسية بعد الآن.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowUnfollowModal(false)} className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">تراجع</button>
-              <button onClick={confirmUnfollow} className="flex-1 py-2.5 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">إلغاء المتابعة</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Block Confirmation Modal */}
-      {showBlockModal && userToBlock && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
-              <Ban size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">حظر {userToBlock.name}؟</h3>
-            <p className="text-gray-500 mb-6 text-sm">لن يتمكنوا من رؤية ملفك الشخصي أو منشوراتك، ولن تتمكن من رؤية محتواهم.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">إلغاء</button>
-              <button onClick={confirmBlock} className="flex-1 py-2.5 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">حظر</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Report Confirmation Modal */}
-      {showReportModal && postToReport && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-600">
-              <AlertTriangle size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">الإبلاغ عن منشور؟</h3>
-            <p className="text-gray-500 mb-6 text-sm">هل يعارض هذا المنشور معايير مجتمعنا؟ سيتم مراجعته من قبل المشرفين.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowReportModal(false)} className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">إلغاء</button>
-              <button onClick={confirmReport} className="flex-1 py-2.5 text-white bg-orange-500 hover:bg-orange-600 rounded-lg font-medium transition-colors">إبلاغ</button>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الدولة</label>
+                <input 
+                  type="text" 
+                  value={editFormData.country || ''} 
+                  onChange={e => setEditFormData({...editFormData, country: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الوظيفة</label>
+                <input 
+                  type="text" 
+                  value={editFormData.job || ''} 
+                  onChange={e => setEditFormData({...editFormData, job: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">النبذة التعريفية</label>
+                <textarea 
+                  value={editFormData.bio || ''} 
+                  onChange={e => setEditFormData({...editFormData, bio: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  rows={3}
+                />
+              </div>
+              
+              <button 
+                onClick={saveProfileChanges}
+                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors mt-4 shadow-lg shadow-blue-200"
+              >
+                حفظ التغييرات
+              </button>
             </div>
           </div>
         </div>
