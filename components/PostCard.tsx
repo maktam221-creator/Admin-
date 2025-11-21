@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2, Edit2, X, Check, Repeat } from 'lucide-react';
 import { Post, User } from '../types';
 
 interface PostCardProps {
@@ -11,6 +11,7 @@ interface PostCardProps {
   onShare: (postId: string) => void;
   onDelete: (postId: string) => void;
   onEdit: (postId: string, newContent: string) => void;
+  onRepost: (postId: string) => void;
   onUserClick: (user: User) => void;
 }
 
@@ -23,6 +24,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onShare,
   onDelete,
   onEdit,
+  onRepost,
   onUserClick
 }) => {
   const [showComments, setShowComments] = useState(false);
@@ -32,6 +34,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [editContent, setEditContent] = useState(post.content);
 
   const isOwner = currentUserId === post.user.id;
+  const isRepost = !!post.originalPost;
 
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +78,15 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="w-10 h-10 rounded-full object-cover border border-gray-200 group-hover:border-blue-400 transition-colors"
           />
           <div>
-            <h3 className="font-bold text-gray-900 text-sm md:text-base group-hover:text-blue-600 transition-colors">{post.user.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-gray-900 text-sm md:text-base group-hover:text-blue-600 transition-colors">{post.user.name}</h3>
+              {isRepost && (
+                <span className="text-xs text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-full">
+                  <Repeat size={12} />
+                  عاد النشر
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-500">{formatDate(post.timestamp)}</p>
           </div>
         </div>
@@ -146,14 +157,53 @@ export const PostCard: React.FC<PostCardProps> = ({
             </div>
           </div>
         ) : (
-          <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap" dir="auto">
-            {post.content}
-          </p>
+          <>
+            {post.content && (
+              <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap mb-2" dir="auto">
+                {post.content}
+              </p>
+            )}
+            
+            {/* Reposted Content */}
+            {isRepost && post.originalPost && (
+              <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/50 mt-2 hover:bg-gray-50 transition-colors cursor-pointer">
+                <div 
+                  className="flex items-center gap-2 mb-2" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUserClick(post.originalPost!.user);
+                  }}
+                >
+                  <img 
+                    src={post.originalPost.user.avatar} 
+                    alt={post.originalPost.user.name} 
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  />
+                  <div>
+                    <h4 className="font-bold text-sm text-gray-900">{post.originalPost.user.name}</h4>
+                    <span className="text-[10px] text-gray-500">{formatDate(post.originalPost.timestamp)}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                  {post.originalPost.content}
+                </p>
+                {post.originalPost.image && (
+                  <div className="mt-2 rounded-lg overflow-hidden">
+                    <img 
+                      src={post.originalPost.image} 
+                      alt="Original post" 
+                      className="w-full h-auto max-h-[300px] object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Post Image */}
-      {post.image && !isEditing && (
+      {/* Post Image (Normal Post) */}
+      {post.image && !isRepost && !isEditing && (
         <div className="mt-2 w-full">
           <img 
             src={post.image} 
@@ -183,7 +233,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           }`}
         >
           <Heart size={20} fill={post.isLiked ? "currentColor" : "none"} />
-          <span className="font-medium text-sm">أعجبني</span>
+          <span className="hidden sm:inline font-medium text-sm">أعجبني</span>
         </button>
         
         <button 
@@ -191,7 +241,15 @@ export const PostCard: React.FC<PostCardProps> = ({
           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
         >
           <MessageCircle size={20} />
-          <span className="font-medium text-sm">تعليق</span>
+          <span className="hidden sm:inline font-medium text-sm">تعليق</span>
+        </button>
+
+        <button 
+          onClick={() => onRepost(post.id)}
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+        >
+          <Repeat size={20} />
+          <span className="hidden sm:inline font-medium text-sm">إعادة نشر</span>
         </button>
         
         <button 
@@ -199,7 +257,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
         >
           <Share2 size={20} />
-          <span className="font-medium text-sm">مشاركة</span>
+          <span className="hidden sm:inline font-medium text-sm">مشاركة</span>
         </button>
       </div>
 
