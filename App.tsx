@@ -156,6 +156,10 @@ function App() {
   // Chat
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
+  
+  // Refs for Chat Notification Logic
+  const currentChatUserRef = useRef<User | null>(null);
+  const viewRef = useRef<ViewState>('home');
 
   // Navigation & Social
   const [viewedUser, setViewedUser] = useState<User | null>(null);
@@ -192,6 +196,19 @@ function App() {
     }
   }, [isDarkMode]);
 
+  // Request Notification Permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Update Refs for Notifications
+  useEffect(() => {
+    currentChatUserRef.current = currentChatUser;
+    viewRef.current = view;
+  }, [currentChatUser, view]);
+
   // --- Helpers ---
   const showToast = (message: string) => {
     const toast = document.createElement('div');
@@ -209,6 +226,16 @@ function App() {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  const sendPushNotification = (title: string, body: string, icon?: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon,
+        // silent: false
+      });
+    }
   };
 
   // --- Handlers: Navigation ---
@@ -461,16 +488,35 @@ function App() {
 
     setMessages([...messages, newMessage]);
 
+    // Capture sender for closure
+    const sender = currentChatUser;
+
     // Simulated Reply
     setTimeout(() => {
       const reply: Message = {
         id: `m_${Date.now() + 1}`,
-        senderId: currentChatUser.id,
+        senderId: sender.id,
         receiverId: currentUser.id,
         content: 'شكراً لرسالتك، سأرد عليك قريباً!',
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, reply]);
+
+      // --- Push Notification Logic ---
+      // Determine if the user is currently looking at this chat
+      const isChattingWithSender = viewRef.current === 'chat' && currentChatUserRef.current?.id === sender.id;
+      const isAppHidden = document.hidden;
+
+      // If app is hidden OR user is not looking at this chat, send notification
+      if (isAppHidden || !isChattingWithSender) {
+        sendPushNotification(`رسالة جديدة من ${sender.name}`, reply.content, sender.avatar);
+        
+        if (!isAppHidden) {
+          // If app is open but user is elsewhere (e.g. Home), show toast
+           showToast(`💬 رسالة جديدة من ${sender.name}`);
+        }
+      }
+
     }, 3000);
   };
 
@@ -930,6 +976,7 @@ function App() {
                    messages={messages}
                    users={users.filter(u => u.id !== currentUser.id)}
                    onSelectUser={handleMessageUser}
+                   onClose={() => setView('home')}
                  />
                )}
              </div>
@@ -972,82 +1019,98 @@ function App() {
             <div className="flex-1 min-w-0">
               {/* Profile View Header */}
               {(view === 'profile' || view === 'user_profile') && (
-                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 animate-fade-in transition-colors">
-                    <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600 relative">
-                      {/* Cover Photo */}
+                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-visible mb-6 animate-fade-in transition-colors">
+                    {/* Cover Photo - Increased height */}
+                    <div className="h-48 bg-gradient-to-r from-blue-600 to-purple-600 relative rounded-t-xl">
                     </div>
-                    <div className="px-6 pb-6">
-                      <div className="flex justify-between items-end -mt-12 mb-4">
-                         <img 
-                           src={view === 'profile' ? currentUser.avatar : viewedUser?.avatar} 
-                           alt="Profile" 
-                           className="w-24 h-24 rounded-full border-4 border-white dark:border-gray-800 shadow-md object-cover"
-                         />
-                         {view === 'profile' ? (
-                           <button 
-                             onClick={handleEditProfile}
-                             className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-                           >
-                             <Edit2 size={16} />
-                             تعديل
-                           </button>
-                         ) : (
-                           <div className="flex gap-2">
-                              <button 
-                                onClick={() => viewedUser && handleMessageUser(viewedUser)}
-                                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-                              >
-                                <MessageCircle size={16} />
-                                مراسلة
-                              </button>
-                              {viewedUser && followedUsersIds.includes(viewedUser.id) ? (
+                    
+                    <div className="px-6 pb-6 relative">
+                      {/* Avatar & Buttons Container */}
+                      <div className="flex flex-col md:flex-row items-start md:items-end -mt-16 mb-4 gap-4">
+                         {/* Avatar - Increased size and z-index */}
+                         <div className="relative z-10">
+                           <img 
+                             src={view === 'profile' ? currentUser.avatar : viewedUser?.avatar} 
+                             alt="Profile" 
+                             className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover bg-white dark:bg-gray-800"
+                           />
+                         </div>
+
+                         {/* Actions */}
+                         <div className="flex-1 flex justify-end w-full md:w-auto mt-4 md:mt-0">
+                           {view === 'profile' ? (
+                             <button 
+                               onClick={handleEditProfile}
+                               className="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 shadow-sm"
+                             >
+                               <Edit2 size={18} />
+                               تعديل الملف
+                             </button>
+                           ) : (
+                             <div className="flex gap-3 w-full md:w-auto">
                                 <button 
-                                  onClick={() => viewedUser && handleUnfollowClick(viewedUser)}
-                                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors flex items-center gap-2 group"
+                                  onClick={() => viewedUser && handleMessageUser(viewedUser)}
+                                  className="flex-1 md:flex-none px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
                                 >
-                                  <UserCheck size={16} className="group-hover:hidden" />
-                                  <UserMinus size={16} className="hidden group-hover:block" />
-                                  <span className="group-hover:hidden">تتابعه</span>
-                                  <span className="hidden group-hover:inline">إلغاء المتابعة</span>
+                                  <MessageCircle size={18} />
+                                  مراسلة
                                 </button>
-                              ) : (
-                                <button 
-                                  onClick={() => viewedUser && handleFollowClick(viewedUser)}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
-                                >
-                                  <UserPlus size={16} />
-                                  متابعة
-                                </button>
-                              )}
-                           </div>
-                         )}
+                                {viewedUser && followedUsersIds.includes(viewedUser.id) ? (
+                                  <button 
+                                    onClick={() => viewedUser && handleUnfollowClick(viewedUser)}
+                                    className="flex-1 md:flex-none px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors flex items-center justify-center gap-2 group"
+                                  >
+                                    <UserCheck size={18} className="group-hover:hidden" />
+                                    <UserMinus size={18} className="hidden group-hover:block" />
+                                    <span className="group-hover:hidden">تتابعه</span>
+                                    <span className="hidden group-hover:inline">إلغاء</span>
+                                  </button>
+                                ) : (
+                                  <button 
+                                    onClick={() => viewedUser && handleFollowClick(viewedUser)}
+                                    className="flex-1 md:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-200 dark:shadow-none"
+                                  >
+                                    <UserPlus size={18} />
+                                    متابعة
+                                  </button>
+                                )}
+                             </div>
+                           )}
+                         </div>
                       </div>
                       
-                      <div className="text-center md:text-right">
+                      {/* Text Info */}
+                      <div className="text-right">
                          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                            {view === 'profile' ? currentUser.name : viewedUser?.name}
                          </h2>
-                         <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+                         <p className="text-gray-500 dark:text-gray-400 text-sm mb-4" dir="ltr">
                            @{view === 'profile' ? currentUser.username : viewedUser?.username}
                          </p>
-                         <p className="text-gray-700 dark:text-gray-300 mb-4">
+                         <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
                            {view === 'profile' ? currentUser.bio : viewedUser?.bio}
                          </p>
                          
                          {/* User Stats in Profile Header */}
-                         <div className="flex justify-center md:justify-start gap-6 text-sm border-t border-gray-50 dark:border-gray-700 pt-4">
-                            <div className="flex items-center gap-1">
-                              <span className="font-bold text-gray-900 dark:text-white">{view === 'profile' ? currentUser.followers : viewedUser?.followers}</span>
+                         <div className="flex flex-wrap gap-6 text-sm border-t border-gray-50 dark:border-gray-700 pt-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-gray-900 dark:text-white text-lg">{view === 'profile' ? currentUser.followers : viewedUser?.followers}</span>
                               <span className="text-gray-500 dark:text-gray-400">متابِع</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-bold text-gray-900 dark:text-white">{view === 'profile' ? currentUser.following : viewedUser?.following}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-gray-900 dark:text-white text-lg">{view === 'profile' ? currentUser.following : viewedUser?.following}</span>
                               <span className="text-gray-500 dark:text-gray-400">متابَع</span>
                             </div>
                             {(view === 'profile' ? currentUser.country : viewedUser?.country) && (
-                              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                                <MapPin size={14} />
+                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mr-auto md:mr-0">
+                                <MapPin size={16} />
                                 <span>{view === 'profile' ? currentUser.country : viewedUser?.country}</span>
+                              </div>
+                            )}
+                             {(view === 'profile' ? currentUser.job : viewedUser?.job) && (
+                              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                                <Briefcase size={16} />
+                                <span>{view === 'profile' ? currentUser.job : viewedUser?.job}</span>
                               </div>
                             )}
                          </div>
