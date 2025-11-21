@@ -823,6 +823,26 @@ function App() {
 
           {/* Left Side: Actions */}
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+             
+             {/* Desktop Navigation Buttons - Added here next to search */}
+             <div className="hidden md:flex items-center gap-2">
+               <button 
+                 onClick={() => { setView('home'); window.scrollTo(0,0); }}
+                 className={`p-2 rounded-full transition-colors relative group ${view === 'home' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                 title="الرئيسية"
+               >
+                 <Home size={22} strokeWidth={view === 'home' ? 2.5 : 2} />
+               </button>
+               
+               <button 
+                 onClick={() => { setView('profile'); window.scrollTo(0,0); }}
+                 className={`p-2 rounded-full transition-colors relative group ${view === 'profile' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                 title="الملف الشخصي"
+               >
+                 <UserIcon size={22} strokeWidth={view === 'profile' ? 2.5 : 2} />
+               </button>
+             </div>
+
              {/* Notifications */}
             <div className="relative">
               <button 
