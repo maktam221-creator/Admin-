@@ -670,27 +670,39 @@ function App() {
     <div className="min-h-screen bg-[#f3f4f6] font-sans pb-20 md:pb-0">
       {/* Top Navigation */}
       <nav className="bg-white sticky top-0 z-40 shadow-sm border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2 flex-shrink-0 cursor-pointer" onClick={handleBackToFeed}>
-            <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              M
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-2 md:gap-4">
+          
+          {/* Right Side Group: Menu + Logo */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+             {/* Hamburger Menu (Mobile) - Positioned First for RTL to be on Right */}
+             <button 
+               onClick={() => setIsSideMenuOpen(true)}
+               className="p-2 text-gray-600 hover:bg-gray-100 rounded-full md:hidden"
+             >
+               <Menu size={22} />
+             </button>
+
+             {/* Logo */}
+             <div className="flex items-center gap-2 cursor-pointer" onClick={handleBackToFeed}>
+              <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                M
+              </div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                Meydan
+              </h1>
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Meydan
-            </h1>
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md relative hidden md:block">
+          <div className="flex-1 max-w-md relative mx-2">
             <input
               type="text"
               placeholder={`بحث في ${searchFilter === 'author' ? 'المستخدمين' : searchFilter === 'date' ? 'التاريخ' : 'المحتوى'}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-0 rounded-full px-4 py-2 pl-10 pr-12 transition-all"
+              className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-0 rounded-full px-4 py-2 pl-10 pr-12 transition-all text-sm"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <button 
               onClick={() => setShowSearchFilterMenu(!showSearchFilterMenu)}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-200 transition-colors"
@@ -710,8 +722,8 @@ function App() {
             )}
           </div>
 
-          {/* Desktop Actions */}
-          <div className="flex items-center gap-2 md:gap-4">
+          {/* Left Side: Actions */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
              {/* Notifications */}
             <div className="relative">
               <button 
@@ -757,14 +769,7 @@ function App() {
               )}
             </div>
 
-            {/* Hamburger Menu */}
-            <button 
-              onClick={() => setIsSideMenuOpen(true)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full md:hidden"
-            >
-              <Menu size={22} />
-            </button>
-            
+            {/* Desktop Hamburger Menu */}
             <button 
                onClick={() => setIsSideMenuOpen(true)}
                className="hidden md:flex p-2 text-gray-600 hover:bg-gray-100 rounded-full"
@@ -775,7 +780,7 @@ function App() {
         </div>
       </nav>
 
-      {/* Side Menu (Drawer) */}
+      {/* Side Menu (Drawer) - Anchored to Right */}
       {isSideMenuOpen && (
         <>
           <div 
@@ -791,7 +796,7 @@ function App() {
             </div>
             
             <div className="p-6">
-              <div className="flex items-center gap-3 mb-6" onClick={() => { setView('profile'); setIsSideMenuOpen(false); }}>
+              <div className="flex items-center gap-3 mb-6 cursor-pointer" onClick={() => { setView('profile'); setIsSideMenuOpen(false); }}>
                 <img src={currentUser.avatar} alt={currentUser.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
                 <div>
                   <h3 className="font-bold text-gray-900">{currentUser.name}</h3>
