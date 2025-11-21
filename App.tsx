@@ -7,10 +7,10 @@ import { ChatList } from './components/ChatList';
 import { Post, User, Message } from './types';
 import { 
   Bell, Menu, Home, User as UserIcon, Search, 
-  UserPlus, UserMinus, Check, Heart, MessageCircle, Share2, 
-  MapPin, Briefcase, GraduationCap, Camera, X, MessageSquare, ChevronRight,
-  Filter, Settings, LogOut, Moon, Sun, Shield, Lock, Info, ChevronLeft, Smartphone, Mail, Eye, EyeOff, Globe, HelpCircle, Ban, Flag,
-  ArrowRight, Edit2, Trash2, Repeat, AlertTriangle, UserCheck
+  UserPlus, UserMinus, MessageCircle, 
+  MapPin, Briefcase, X, MessageSquare, ChevronRight,
+  Filter, Settings, LogOut, Moon, Sun, Shield, Lock, ChevronLeft, Eye, HelpCircle, Ban, Flag,
+  Edit2, Trash2, UserCheck, Check, AlertTriangle, Upload
 } from 'lucide-react';
 
 // Initial Mock Data for Current User
@@ -437,8 +437,6 @@ function App() {
   const confirmBlock = () => {
     if (userToBlock) {
       setBlockedUsers([...blockedUsers, userToBlock]);
-      // NOTE: We do NOT remove posts from 'posts' state permanently.
-      // The 'filteredPosts' logic will hide them. This allows unblocking to restore posts.
       showToast(`تم حظر ${userToBlock.name}`);
       setShowBlockModal(false);
       setUserToBlock(null);
@@ -512,7 +510,6 @@ function App() {
         sendPushNotification(`رسالة جديدة من ${sender.name}`, reply.content, sender.avatar);
         
         if (!isAppHidden) {
-          // If app is open but user is elsewhere (e.g. Home), show toast
            showToast(`💬 رسالة جديدة من ${sender.name}`);
         }
       }
@@ -534,7 +531,6 @@ function App() {
     } else if (searchFilter === 'author') {
       return post.user.name.toLowerCase().includes(query);
     } else if (searchFilter === 'date') {
-      // Simple date filtering logic (e.g., searching for "Jan", "2024")
       const dateStr = new Date(post.timestamp).toLocaleDateString('ar-EG', { month: 'long', year: 'numeric', day: 'numeric' });
       return dateStr.includes(query);
     }
@@ -948,7 +944,7 @@ function App() {
                 <div className="h-px bg-gray-100 dark:bg-gray-700 my-2"></div>
                 <button 
                   onClick={() => { setIsSideMenuOpen(false); handleLogout(); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium"
                 >
                   <LogOut size={20} />
                   تسجيل الخروج
@@ -1188,271 +1184,334 @@ function App() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-40 safe-area-bottom transition-colors">
         <button 
           onClick={() => { setView('home'); window.scrollTo(0,0); }}
-          className={`flex flex-col items-center gap-1 ${view === 'home' ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}
+          className={`flex flex-col items-center gap-1 ${view === 'home' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <Home size={24} strokeWidth={view === 'home' ? 2.5 : 2} />
-          <span className="text-[10px] font-medium">الرئيسية</span>
         </button>
         
         <button 
-           onClick={() => { setView('profile'); window.scrollTo(0,0); }}
-           className={`flex flex-col items-center gap-1 ${view === 'profile' ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}
+          onClick={() => { setView('profile'); window.scrollTo(0,0); }}
+          className={`flex flex-col items-center gap-1 ${view === 'profile' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <UserIcon size={24} strokeWidth={view === 'profile' ? 2.5 : 2} />
-          <span className="text-[10px] font-medium">ملفي</span>
         </button>
 
         <button 
-           onClick={() => { setView('chat'); setCurrentChatUser(null); }}
-           className={`flex flex-col items-center gap-1 ${view === 'chat' ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}
+          onClick={handleChatClick}
+          className={`flex flex-col items-center gap-1 ${view === 'chat' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <MessageSquare size={24} strokeWidth={view === 'chat' ? 2.5 : 2} />
-          <span className="text-[10px] font-medium">الرسائل</span>
         </button>
       </nav>
 
-      {/* --- MODALS --- */}
-      
-      {/* Help & Support Modal */}
-      {showHelpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 transform scale-100 animate-in zoom-in-95 flex flex-col max-h-[80vh]">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <HelpCircle size={24} className="text-blue-600" />
-                المساعدة والدعم
-              </h3>
-              <button onClick={() => setShowHelpModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
-              <h4 className="font-bold text-gray-800 dark:text-white mb-3">الأسئلة الشائعة</h4>
-              <div className="space-y-3 mb-6">
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <details className="group">
-                    <summary className="flex cursor-pointer items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium">
-                      كيف يمكنني تغيير كلمة المرور؟
-                      <span className="ml-2 shrink-0 transition duration-300 group-open:-rotate-180">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    </summary>
-                    <div className="p-4 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                      يمكنك تغيير كلمة المرور بالذهاب إلى الإعدادات > الأمان > تغيير كلمة المرور.
-                    </div>
-                  </details>
-                </div>
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <details className="group">
-                    <summary className="flex cursor-pointer items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium">
-                      كيف يمكنني حظر مستخدم مزعج؟
-                      <span className="ml-2 shrink-0 transition duration-300 group-open:-rotate-180">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    </summary>
-                    <div className="p-4 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                      من أي منشور للمستخدم، اضغط على النقاط الثلاث واختر "حظر المستخدم". يمكنك إدارة المحظورين من إعدادات الخصوصية.
-                    </div>
-                  </details>
-                </div>
-              </div>
-
-              <h4 className="font-bold text-gray-800 dark:text-white mb-3">تواصل معنا</h4>
-              <form onSubmit={(e) => { e.preventDefault(); showToast("تم إرسال رسالتك للدعم الفني"); setShowHelpModal(false); }} className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الموضوع</label>
-                  <input type="text" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الرسالة</label>
-                  <textarea className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows={4} required></textarea>
-                </div>
-                <button type="submit" className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">إرسال</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* --- Modals --- */}
 
       {/* Logout Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 animate-in zoom-in-95">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
-              <LogOut size={32} />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">تسجيل الخروج</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">هل أنت متأكد أنك تريد تسجيل الخروج من الحساب؟</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl border border-gray-100 dark:border-gray-700">
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">تأكيد الخروج</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">هل أنت متأكد أنك تريد تسجيل الخروج من التطبيق؟</p>
             <div className="flex gap-3">
-              <button onClick={() => setShowLogoutModal(false)} className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">إلغاء</button>
-              <button onClick={confirmLogout} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">خروج</button>
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={confirmLogout}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+              >
+                نعم، خروج
+              </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Delete Post Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">حذف المنشور</h3>
-             <p className="text-gray-500 dark:text-gray-400 mb-6">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
-             <div className="flex gap-3">
-               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
-               <button onClick={confirmDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">حذف</button>
-             </div>
-           </div>
-        </div>
-      )}
-
-      {/* Follow Modal */}
-      {showFollowModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-blue-100 dark:border-blue-900">
-                <img src={userToFollow?.avatar} alt="" className="w-full h-full object-cover" />
-             </div>
-             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">متابعة {userToFollow?.name}؟</h3>
-             <p className="text-gray-500 dark:text-gray-400 mb-6">ستظهر منشورات هذا المستخدم في صفحتك الرئيسية.</p>
-             <div className="flex gap-3">
-               <button onClick={() => setShowFollowModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
-               <button onClick={confirmFollow} className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-medium">متابعة</button>
-             </div>
-           </div>
-        </div>
-      )}
-
-      {/* Unfollow Modal */}
-      {showUnfollowModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-red-100 dark:border-red-900 grayscale">
-                <img src={userToUnfollow?.avatar} alt="" className="w-full h-full object-cover" />
-             </div>
-             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">إلغاء متابعة {userToUnfollow?.name}؟</h3>
-             <p className="text-gray-500 dark:text-gray-400 mb-6">لن ترى منشورات هذا المستخدم في صفحتك الرئيسية بعد الآن.</p>
-             <div className="flex gap-3">
-               <button onClick={() => setShowUnfollowModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
-               <button onClick={confirmUnfollow} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">إلغاء المتابعة</button>
-             </div>
-           </div>
-        </div>
-      )}
-      
-      {/* Block Modal */}
-      {showBlockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
-               <Ban size={32} />
-             </div>
-             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">حظر {userToBlock?.name}</h3>
-             <p className="text-gray-500 dark:text-gray-400 mb-6">لن يتمكن هذا المستخدم من رؤية ملفك الشخصي أو التفاعل معك. سيتم إخفاء محتواه من صفحتك.</p>
-             <div className="flex gap-3">
-               <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
-               <button onClick={confirmBlock} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">حظر</button>
-             </div>
-           </div>
-        </div>
-      )}
-
-      {/* Report Modal */}
-      {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center mx-auto mb-4">
-               <Flag size={32} />
-             </div>
-             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">الإبلاغ عن محتوى</h3>
-             <p className="text-gray-500 dark:text-gray-400 mb-6">هل أنت متأكد أنك تريد الإبلاغ عن هذا المنشور؟ سيتم مراجعته من قبل الإدارة.</p>
-             <div className="flex gap-3">
-               <button onClick={() => setShowReportModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
-               <button onClick={confirmReport} className="flex-1 py-2 bg-orange-600 text-white rounded-xl font-medium">إبلاغ</button>
-             </div>
-           </div>
         </div>
       )}
 
       {/* Edit Profile Modal */}
       {showEditProfileModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 my-10">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-lg w-full shadow-xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">تعديل الملف الشخصي</h3>
-              <button onClick={() => setShowEditProfileModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                <X size={24} />
-              </button>
+              <button onClick={() => setShowEditProfileModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X size={24}/></button>
             </div>
             
             <div className="space-y-4">
-              {/* Avatar Upload Simulation */}
-              <div className="flex flex-col items-center mb-4">
-                <div className="relative group cursor-pointer">
-                  <img src={editFormData.avatar || currentUser.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />
-                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="text-white" />
+               {/* Image Upload Simulation */}
+               <div className="flex justify-center mb-6">
+                 <div className="relative">
+                   <img src={editFormData.avatar || currentUser.avatar} alt="Profile" className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />
+                   <button className="absolute bottom-0 right-0 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 border-2 border-white dark:border-gray-800">
+                     <Upload size={16} />
+                   </button>
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الاسم</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.name || ''} 
+                      onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم المستخدم</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.username || ''} 
+                      onChange={(e) => setEditFormData({...editFormData, username: e.target.value})}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+               </div>
+
+               <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">النبذة التعريفية (Bio)</label>
+                  <textarea 
+                    value={editFormData.bio || ''} 
+                    onChange={(e) => setEditFormData({...editFormData, bio: e.target.value})}
+                    rows={3}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  />
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدولة</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.country || ''} 
+                      onChange={(e) => setEditFormData({...editFormData, country: e.target.value})}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">المدينة/الوظيفة</label>
+                    <input 
+                      type="text" 
+                      value={editFormData.job || ''} 
+                      onChange={(e) => setEditFormData({...editFormData, job: e.target.value})}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+               </div>
+
+               <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <button 
+                    onClick={() => setShowEditProfileModal(false)}
+                    className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+                  >
+                    إلغاء
+                  </button>
+                  <button 
+                    onClick={saveProfileChanges}
+                    className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    حفظ التغييرات
+                  </button>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unfollow Confirmation Modal */}
+      {showUnfollowModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl border border-gray-100 dark:border-gray-700 text-center">
+            <img src={userToUnfollow?.avatar} alt="" className="w-16 h-16 rounded-full mx-auto mb-4 object-cover" />
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">إلغاء متابعة {userToUnfollow?.name}؟</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">لن تظهر منشوراتهم في صفحتك الرئيسية بعد الآن.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowUnfollowModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={confirmUnfollow}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+              >
+                إلغاء المتابعة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+       {/* Follow Confirmation Modal */}
+      {showFollowModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl border border-gray-100 dark:border-gray-700 text-center">
+            <img src={userToFollow?.avatar} alt="" className="w-16 h-16 rounded-full mx-auto mb-4 object-cover" />
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">متابعة {userToFollow?.name}؟</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">ستتمكن من رؤية منشوراتهم وتحديثاتهم في صفحتك الرئيسية.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowFollowModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={confirmFollow}
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
+              >
+                متابعة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Post Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl border border-gray-100 dark:border-gray-700 text-center">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">حذف المنشور؟</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد؟</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block User Confirmation Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl border border-gray-100 dark:border-gray-700 text-center">
+             <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+              <Ban size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">حظر {userToBlock?.name}؟</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">لن يتمكن هذا المستخدم من رؤية ملفك الشخصي أو منشوراتك، ولن تظهر منشوراته لك.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowBlockModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={confirmBlock}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+              >
+                حظر
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Post Confirmation Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl border border-gray-100 dark:border-gray-700 text-center">
+             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-600 dark:text-orange-400">
+              <Flag size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">الإبلاغ عن محتوى؟</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">سيتم مراجعة هذا المنشور من قبل الإدارة للتأكد من مطابقته لمعايير المجتمع.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowReportModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                إلغاء
+              </button>
+              <button 
+                onClick={confirmReport}
+                className="flex-1 py-2.5 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors font-medium"
+              >
+                إرسال بلاغ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+       {/* Help & Support Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-lg w-full shadow-xl border border-gray-100 dark:border-gray-700 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">المساعدة والدعم</h3>
+              <button onClick={() => setShowHelpModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X size={24}/></button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                  <HelpCircle size={18} />
+                  الأسئلة الشائعة
+                </h4>
+                <div className="space-y-2">
+                  <details className="group bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    <summary className="flex justify-between items-center font-medium cursor-pointer p-4 list-none text-gray-900 dark:text-white">
+                      كيف يمكنني تغيير كلمة المرور؟
+                      <span className="transition group-open:rotate-180">
+                        <ChevronLeft size={16} className="rotate-[-90deg]" />
+                      </span>
+                    </summary>
+                    <div className="text-gray-600 dark:text-gray-300 p-4 pt-0 text-sm leading-relaxed border-t border-gray-100 dark:border-gray-600">
+                       يمكنك تغيير كلمة المرور بالذهاب إلى الإعدادات &gt; الأمان &gt; تغيير كلمة المرور.
+                    </div>
+                  </details>
+                  
+                  <details className="group bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    <summary className="flex justify-between items-center font-medium cursor-pointer p-4 list-none text-gray-900 dark:text-white">
+                      كيف أقوم بحظر مستخدم مزعج؟
+                      <span className="transition group-open:rotate-180">
+                         <ChevronLeft size={16} className="rotate-[-90deg]" />
+                      </span>
+                    </summary>
+                    <div className="text-gray-600 dark:text-gray-300 p-4 pt-0 text-sm leading-relaxed border-t border-gray-100 dark:border-gray-600">
+                      اضغط على القائمة (الثلاث نقاط) في منشور المستخدم، ثم اختر "حظر المستخدم".
+                    </div>
+                  </details>
+                   <details className="group bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    <summary className="flex justify-between items-center font-medium cursor-pointer p-4 list-none text-gray-900 dark:text-white">
+                      كيف أفعل الوضع الليلي؟
+                      <span className="transition group-open:rotate-180">
+                         <ChevronLeft size={16} className="rotate-[-90deg]" />
+                      </span>
+                    </summary>
+                    <div className="text-gray-600 dark:text-gray-300 p-4 pt-0 text-sm leading-relaxed border-t border-gray-100 dark:border-gray-600">
+                      افتح القائمة الجانبية واضغط على زر "الوضع الليلي".
+                    </div>
+                  </details>
                 </div>
-                <span className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">تغيير الصورة</span>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الاسم</label>
-                <input 
-                  type="text" 
-                  value={editFormData.name || ''} 
-                  onChange={e => setEditFormData({...editFormData, name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                />
+              <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
+                <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-3">تواصل معنا</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">هل لديك مشكلة لم تجد لها حلاً؟ راسل فريق الدعم.</p>
+                <button className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                  إرسال رسالة للدعم الفني
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم المستخدم</label>
-                <input 
-                  type="text" 
-                  value={editFormData.username || ''} 
-                  onChange={e => setEditFormData({...editFormData, username: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدولة</label>
-                <input 
-                  type="text" 
-                  value={editFormData.country || ''} 
-                  onChange={e => setEditFormData({...editFormData, country: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الوظيفة</label>
-                <input 
-                  type="text" 
-                  value={editFormData.job || ''} 
-                  onChange={e => setEditFormData({...editFormData, job: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">النبذة التعريفية</label>
-                <textarea 
-                  value={editFormData.bio || ''} 
-                  onChange={e => setEditFormData({...editFormData, bio: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                  rows={3}
-                />
-              </div>
-              
-              <button 
-                onClick={saveProfileChanges}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors mt-4 shadow-lg shadow-blue-200 dark:shadow-none"
-              >
-                حفظ التغييرات
-              </button>
             </div>
           </div>
         </div>
