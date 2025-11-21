@@ -47,19 +47,19 @@ export const CreatePost: React.FC<CreatePostProps> = ({ currentUserAvatar, onPos
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6 transition-colors">
       <div className="flex gap-3">
         <img 
           src={currentUserAvatar} 
           alt="Current User" 
-          className="w-10 h-10 rounded-full object-cover border border-gray-200"
+          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
         />
         <div className="flex-1">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="بماذا تفكر اليوم؟"
-            className="w-full p-2 text-base border-none resize-none focus:ring-0 outline-none min-h-[80px] placeholder-gray-400"
+            className="w-full p-2 text-base border-none resize-none focus:ring-0 outline-none min-h-[80px] placeholder-gray-400 bg-transparent text-gray-900 dark:text-white"
             rows={3}
           />
           
@@ -75,7 +75,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ currentUserAvatar, onPos
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <input
                 type="file"
@@ -86,18 +86,18 @@ export const CreatePost: React.FC<CreatePostProps> = ({ currentUserAvatar, onPos
               />
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-sm"
               >
-                <ImageIcon size={18} className="text-green-600" />
+                <ImageIcon size={18} className="text-green-600 dark:text-green-400" />
                 <span>صورة</span>
               </button>
               
               <button 
                 onClick={handleAiEnhance}
                 disabled={!text.trim() || isEnhancing}
-                className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:bg-purple-50 rounded-full transition-colors text-sm disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-full transition-colors text-sm disabled:opacity-50"
               >
-                <Sparkles size={18} className="text-purple-600" />
+                <Sparkles size={18} className="text-purple-600 dark:text-purple-400" />
                 <span>{isEnhancing ? 'جاري التحسين...' : 'تحسين النص'}</span>
               </button>
             </div>

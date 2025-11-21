@@ -9,7 +9,7 @@ import {
   Bell, Menu, Home, User as UserIcon, Search, 
   UserPlus, UserMinus, Check, Heart, MessageCircle, Share2, 
   MapPin, Briefcase, GraduationCap, Camera, X, MessageSquare, ChevronRight,
-  Filter, Settings, LogOut, Moon, Shield, Lock, Info, ChevronLeft, Smartphone, Mail, Eye, EyeOff, Globe, HelpCircle, Ban, Flag,
+  Filter, Settings, LogOut, Moon, Sun, Shield, Lock, Info, ChevronLeft, Smartphone, Mail, Eye, EyeOff, Globe, HelpCircle, Ban, Flag,
   ArrowRight, Edit2, Trash2, Repeat, AlertTriangle, UserCheck
 } from 'lucide-react';
 
@@ -141,6 +141,14 @@ function App() {
   const [showSearchFilterMenu, setShowSearchFilterMenu] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   
+  // Dark Mode
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true';
+    }
+    return false;
+  });
+
   // Notifications
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -171,11 +179,23 @@ function App() {
   const [userToBlock, setUserToBlock] = useState<User | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [postToReport, setPostToReport] = useState<Post | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // --- Effects ---
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  }, [isDarkMode]);
 
   // --- Helpers ---
   const showToast = (message: string) => {
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-bottom-5 text-sm font-medium';
+    toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-bottom-5 text-sm font-medium';
     toast.innerText = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
@@ -185,6 +205,10 @@ function App() {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...update } : u));
     if (currentUser.id === userId) setCurrentUser(prev => ({ ...prev, ...update }));
     if (viewedUser?.id === userId) setViewedUser(prev => ({ ...prev!, ...update }));
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   // --- Handlers: Navigation ---
@@ -481,23 +505,23 @@ function App() {
               <ChevronRight />
               <span className="font-bold">العودة</span>
             </div>
-            <h3 className="text-lg font-bold border-b pb-2">معلومات الحساب</h3>
+            <h3 className="text-lg font-bold border-b pb-2 text-gray-800 dark:text-white dark:border-gray-700">معلومات الحساب</h3>
             <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-                <span className="text-gray-600">الاسم</span>
-                <span className="font-medium">{currentUser.name}</span>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-300">الاسم</span>
+                <span className="font-medium text-gray-900 dark:text-white">{currentUser.name}</span>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-                <span className="text-gray-600">اسم المستخدم</span>
-                <span className="font-medium">@{currentUser.username}</span>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-300">اسم المستخدم</span>
+                <span className="font-medium text-gray-900 dark:text-white">@{currentUser.username}</span>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-                <span className="text-gray-600">البريد الإلكتروني</span>
-                <span className="font-medium">{currentUser.email}</span>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-300">البريد الإلكتروني</span>
+                <span className="font-medium text-gray-900 dark:text-white">{currentUser.email}</span>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-                <span className="text-gray-600">رقم الهاتف</span>
-                <span className="font-medium">{currentUser.phone}</span>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-300">رقم الهاتف</span>
+                <span className="font-medium text-gray-900 dark:text-white">{currentUser.phone}</span>
               </div>
               <button onClick={handleEditProfile} className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">تعديل المعلومات</button>
             </div>
@@ -510,23 +534,23 @@ function App() {
               <ChevronRight />
               <span className="font-bold">العودة</span>
             </div>
-            <h3 className="text-lg font-bold border-b pb-2">الأمان وكلمة المرور</h3>
+            <h3 className="text-lg font-bold border-b pb-2 text-gray-800 dark:text-white dark:border-gray-700">الأمان وكلمة المرور</h3>
             <div className="space-y-4">
-              <button className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg">
-                <span className="flex items-center gap-3">
-                  <Lock size={20} className="text-gray-500" />
+              <button className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                <span className="flex items-center gap-3 text-gray-800 dark:text-white">
+                  <Lock size={20} className="text-gray-500 dark:text-gray-400" />
                   تغيير كلمة المرور
                 </span>
                 <ChevronLeft size={18} className="text-gray-400" />
               </button>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <span className="flex items-center gap-3">
-                  <Shield size={20} className="text-gray-500" />
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="flex items-center gap-3 text-gray-800 dark:text-white">
+                  <Shield size={20} className="text-gray-500 dark:text-gray-400" />
                   المصادقة الثنائية
                 </span>
                 <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                   <input type="checkbox" name="toggle" id="2fa" className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                  <label htmlFor="2fa" className="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                  <label htmlFor="2fa" className="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
                 </div>
               </div>
             </div>
@@ -539,11 +563,11 @@ function App() {
               <ChevronRight />
               <span className="font-bold">العودة</span>
             </div>
-            <h3 className="text-lg font-bold border-b pb-2">الخصوصية</h3>
+            <h3 className="text-lg font-bold border-b pb-2 text-gray-800 dark:text-white dark:border-gray-700">الخصوصية</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <span className="flex items-center gap-3">
-                  <Lock size={20} className="text-gray-500" />
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="flex items-center gap-3 text-gray-800 dark:text-white">
+                  <Lock size={20} className="text-gray-500 dark:text-gray-400" />
                   حساب خاص
                 </span>
                 <input 
@@ -562,9 +586,9 @@ function App() {
                   className="w-5 h-5 text-blue-600 cursor-pointer"
                 />
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <span className="flex items-center gap-3">
-                  <Eye size={20} className="text-gray-500" />
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="flex items-center gap-3 text-gray-800 dark:text-white">
+                  <Eye size={20} className="text-gray-500 dark:text-gray-400" />
                   حالة النشاط
                 </span>
                 <input 
@@ -585,29 +609,29 @@ function App() {
               </div>
               
               {/* Blocked Users Section */}
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <h4 className="font-bold mb-3 text-sm text-gray-800 flex items-center gap-2">
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <h4 className="font-bold mb-3 text-sm text-gray-800 dark:text-gray-200 flex items-center gap-2">
                   <Ban size={16} className="text-red-500" />
                   المستخدمون المحظورون
                 </h4>
                 {blockedUsers.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                  <div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-200 dark:border-gray-600">
                      <p className="text-sm text-gray-400">لا يوجد مستخدمين محظورين.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {blockedUsers.map(u => (
-                      <div key={u.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                      <div key={u.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
                         <div className="flex items-center gap-3">
                           <img src={u.avatar} alt={u.name} className="w-10 h-10 rounded-full object-cover" />
                           <div>
-                             <span className="text-sm font-bold text-gray-900 block">{u.name}</span>
+                             <span className="text-sm font-bold text-gray-900 dark:text-white block">{u.name}</span>
                              <span className="text-xs text-gray-400 block">@{u.username}</span>
                           </div>
                         </div>
                         <button 
                           onClick={() => handleUnblock(u.id)}
-                          className="flex items-center gap-1 text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-full border border-red-100 hover:bg-red-100 transition-colors"
+                          className="flex items-center gap-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-full border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                         >
                           <UserCheck size={14} />
                           إلغاء الحظر
@@ -627,12 +651,12 @@ function App() {
               <ChevronRight />
               <span className="font-bold">العودة</span>
             </div>
-            <h3 className="text-lg font-bold border-b pb-2">إعدادات الإشعارات</h3>
+            <h3 className="text-lg font-bold border-b pb-2 text-gray-800 dark:text-white dark:border-gray-700">إعدادات الإشعارات</h3>
             <div className="space-y-4">
               {Object.entries(currentUser.notificationPreferences || {}).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <span className="flex items-center gap-3 capitalize">
-                    <Bell size={20} className="text-gray-500" />
+                <div key={key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <span className="flex items-center gap-3 capitalize text-gray-800 dark:text-white">
+                    <Bell size={20} className="text-gray-500 dark:text-gray-400" />
                     {key === 'likes' ? 'الإعجابات' : key === 'comments' ? 'التعليقات' : 'المتابعات'}
                   </span>
                   <input 
@@ -649,42 +673,42 @@ function App() {
       default:
         return (
           <div className="space-y-2 animate-fade-in">
-            <button onClick={() => setSettingsView('account')} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-100 transition-all">
+            <button onClick={() => setSettingsView('account')} className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl border border-gray-100 dark:border-gray-600 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-full"><UserIcon size={20} /></div>
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full"><UserIcon size={20} /></div>
                 <div className="text-right">
-                  <h4 className="font-bold text-gray-800">الحساب</h4>
-                  <p className="text-xs text-gray-500">معلوماتك الشخصية</p>
+                  <h4 className="font-bold text-gray-800 dark:text-white">الحساب</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">معلوماتك الشخصية</p>
                 </div>
               </div>
               <ChevronLeft className="text-gray-400" />
             </button>
-            <button onClick={() => setSettingsView('security')} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-100 transition-all">
+            <button onClick={() => setSettingsView('security')} className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl border border-gray-100 dark:border-gray-600 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-50 text-green-600 rounded-full"><Shield size={20} /></div>
+                <div className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full"><Shield size={20} /></div>
                 <div className="text-right">
-                  <h4 className="font-bold text-gray-800">الأمان</h4>
-                  <p className="text-xs text-gray-500">كلمة المرور والحماية</p>
+                  <h4 className="font-bold text-gray-800 dark:text-white">الأمان</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">كلمة المرور والحماية</p>
                 </div>
               </div>
               <ChevronLeft className="text-gray-400" />
             </button>
-            <button onClick={() => setSettingsView('privacy')} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-100 transition-all">
+            <button onClick={() => setSettingsView('privacy')} className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl border border-gray-100 dark:border-gray-600 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-50 text-purple-600 rounded-full"><Lock size={20} /></div>
+                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full"><Lock size={20} /></div>
                 <div className="text-right">
-                  <h4 className="font-bold text-gray-800">الخصوصية</h4>
-                  <p className="text-xs text-gray-500">من يرى منشوراتك</p>
+                  <h4 className="font-bold text-gray-800 dark:text-white">الخصوصية</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">من يرى منشوراتك</p>
                 </div>
               </div>
               <ChevronLeft className="text-gray-400" />
             </button>
-             <button onClick={() => setSettingsView('notifications')} className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-100 transition-all">
+             <button onClick={() => setSettingsView('notifications')} className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl border border-gray-100 dark:border-gray-600 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-50 text-orange-600 rounded-full"><Bell size={20} /></div>
+                <div className="p-2 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full"><Bell size={20} /></div>
                 <div className="text-right">
-                  <h4 className="font-bold text-gray-800">الإشعارات</h4>
-                  <p className="text-xs text-gray-500">تخصيص التنبيهات</p>
+                  <h4 className="font-bold text-gray-800 dark:text-white">الإشعارات</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">تخصيص التنبيهات</p>
                 </div>
               </div>
               <ChevronLeft className="text-gray-400" />
@@ -696,9 +720,9 @@ function App() {
 
   // --- Main Render ---
   return (
-    <div className="min-h-screen bg-[#f3f4f6] font-sans pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#f3f4f6] dark:bg-gray-900 font-sans pb-20 md:pb-0 transition-colors duration-300">
       {/* Top Navigation */}
-      <nav className="bg-white sticky top-0 z-40 shadow-sm border-b border-gray-200">
+      <nav className="bg-white dark:bg-gray-800 sticky top-0 z-40 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-2 md:gap-4">
           
           {/* Right Side Group: Menu + Logo */}
@@ -706,7 +730,7 @@ function App() {
              {/* Hamburger Menu (Mobile) - Positioned First for RTL to be on Right */}
              <button 
                onClick={() => setIsSideMenuOpen(true)}
-               className="p-2 text-gray-600 hover:bg-gray-100 rounded-full md:hidden"
+               className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full md:hidden"
              >
                <Menu size={22} />
              </button>
@@ -729,12 +753,12 @@ function App() {
               placeholder={`بحث في ${searchFilter === 'author' ? 'المستخدمين' : searchFilter === 'date' ? 'التاريخ' : 'المحتوى'}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-0 rounded-full px-4 py-2 pl-10 pr-12 transition-all text-sm"
+              className="w-full bg-gray-100 dark:bg-gray-700 border-transparent focus:bg-white dark:focus:bg-gray-600 focus:border-blue-500 focus:ring-0 rounded-full px-4 py-2 pl-10 pr-12 transition-all text-sm dark:text-white dark:placeholder-gray-400"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
             <button 
               onClick={() => setShowSearchFilterMenu(!showSearchFilterMenu)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-200 transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               <Filter size={16} />
             </button>
@@ -742,10 +766,10 @@ function App() {
             {showSearchFilterMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowSearchFilterMenu(false)} />
-                <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 z-20 overflow-hidden py-1">
-                   <button onClick={() => { setSearchFilter('content'); setShowSearchFilterMenu(false); }} className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 ${searchFilter === 'content' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>المحتوى</button>
-                   <button onClick={() => { setSearchFilter('author'); setShowSearchFilterMenu(false); }} className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 ${searchFilter === 'author' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>الكاتب</button>
-                   <button onClick={() => { setSearchFilter('date'); setShowSearchFilterMenu(false); }} className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 ${searchFilter === 'date' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}>التاريخ</button>
+                <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 z-20 overflow-hidden py-1">
+                   <button onClick={() => { setSearchFilter('content'); setShowSearchFilterMenu(false); }} className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${searchFilter === 'content' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'}`}>المحتوى</button>
+                   <button onClick={() => { setSearchFilter('author'); setShowSearchFilterMenu(false); }} className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${searchFilter === 'author' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'}`}>الكاتب</button>
+                   <button onClick={() => { setSearchFilter('date'); setShowSearchFilterMenu(false); }} className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${searchFilter === 'date' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'}`}>التاريخ</button>
                 </div>
               </>
             )}
@@ -757,31 +781,31 @@ function App() {
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative transition-colors"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full relative transition-colors"
               >
                 <Bell size={22} />
                 {notifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
                 )}
               </button>
                {/* Notification Dropdown */}
                {showNotifications && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
-                  <div className="absolute left-0 md:-left-20 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                    <div className="p-3 border-b border-gray-50 flex justify-between items-center">
-                      <h3 className="font-bold text-sm text-gray-800">الإشعارات</h3>
-                      <button className="text-xs text-blue-600 hover:underline">تحديد الكل كمقروء</button>
+                  <div className="absolute left-0 md:-left-20 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <div className="p-3 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center">
+                      <h3 className="font-bold text-sm text-gray-800 dark:text-gray-200">الإشعارات</h3>
+                      <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">تحديد الكل كمقروء</button>
                     </div>
                     <div className="max-h-[300px] overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="p-6 text-center text-gray-500 text-sm">لا توجد إشعارات جديدة</div>
+                        <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">لا توجد إشعارات جديدة</div>
                       ) : (
                         notifications.map(notif => (
-                          <div key={notif.id} className={`p-3 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${!notif.read ? 'bg-blue-50/50' : ''}`}>
+                          <div key={notif.id} className={`p-3 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0 ${!notif.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'dark:bg-gray-800'}`}>
                             <img src={notif.user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
                             <div className="flex-1">
-                              <p className="text-sm text-gray-800">
+                              <p className="text-sm text-gray-800 dark:text-gray-200">
                                 <span className="font-bold">{notif.user.name}</span>
                                 {notif.type === 'like' && ' أعجب بمنشورك'}
                                 {notif.type === 'comment' && ' علق على منشورك'}
@@ -801,7 +825,7 @@ function App() {
             {/* Desktop Hamburger Menu */}
             <button 
                onClick={() => setIsSideMenuOpen(true)}
-               className="hidden md:flex p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+               className="hidden md:flex p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
             >
               <Menu size={22} />
             </button>
@@ -816,47 +840,49 @@ function App() {
             className="fixed inset-0 bg-black/50 z-40 transition-opacity" 
             onClick={() => setIsSideMenuOpen(false)}
           />
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 overflow-y-auto">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-800">القائمة</h2>
-              <button onClick={() => setIsSideMenuOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-gray-800 z-50 shadow-2xl transform transition-transform duration-300 overflow-y-auto border-l border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">القائمة</h2>
+              <button onClick={() => setIsSideMenuOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <X size={24} />
               </button>
             </div>
             
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6 cursor-pointer" onClick={() => { setView('profile'); setIsSideMenuOpen(false); }}>
-                <img src={currentUser.avatar} alt={currentUser.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                <img src={currentUser.avatar} alt={currentUser.name} className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-600" />
                 <div>
-                  <h3 className="font-bold text-gray-900">{currentUser.name}</h3>
-                  <span className="text-sm text-gray-500">عرض الملف الشخصي</span>
+                  <h3 className="font-bold text-gray-900 dark:text-white">{currentUser.name}</h3>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">عرض الملف الشخصي</span>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <button 
                   onClick={() => { setView('settings'); setSettingsView('main'); setIsSideMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
                 >
                   <Settings size={20} />
                   الإعدادات والخصوصية
                 </button>
                 <button 
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+                  onClick={toggleDarkMode}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
                 >
-                  <Moon size={20} />
-                  الوضع الليلي
+                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                  {isDarkMode ? 'الوضع النهاري' : 'الوضع الليلي'}
                 </button>
                  <button 
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+                  onClick={() => { setShowHelpModal(true); setIsSideMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
                 >
                   <HelpCircle size={20} />
                   المساعدة والدعم
                 </button>
-                <div className="h-px bg-gray-100 my-2"></div>
+                <div className="h-px bg-gray-100 dark:bg-gray-700 my-2"></div>
                 <button 
                   onClick={() => { setIsSideMenuOpen(false); handleLogout(); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors font-medium"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium"
                 >
                   <LogOut size={20} />
                   تسجيل الخروج
@@ -871,12 +897,12 @@ function App() {
       <main className="max-w-5xl mx-auto p-4 flex gap-6">
         {/* View Routing */}
         {view === 'settings' ? (
-           <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6 min-h-[500px]">
+           <div className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 min-h-[500px] transition-colors">
              <div className="flex items-center justify-between mb-6">
-               <h2 className="text-2xl font-bold text-gray-800">الإعدادات</h2>
+               <h2 className="text-2xl font-bold text-gray-800 dark:text-white">الإعدادات</h2>
                <button 
                  onClick={() => setView('home')} 
-                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                  title="إغلاق"
                >
                  <X size={24} />
@@ -912,31 +938,31 @@ function App() {
             {/* Right Sidebar (Desktop Profile) - Only show on home/profile */}
              <aside className="hidden md:block w-[280px] flex-shrink-0 space-y-4">
                 {/* Profile Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center sticky top-20">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 text-center sticky top-20 transition-colors">
                   <div className="relative inline-block mb-3">
-                    <img src={currentUser.avatar} alt={currentUser.name} className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 mx-auto" />
-                    <div className="absolute bottom-1 right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
+                    <img src={currentUser.avatar} alt={currentUser.name} className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 dark:border-gray-700 mx-auto" />
+                    <div className="absolute bottom-1 right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800"></div>
                   </div>
-                  <h2 className="font-bold text-xl text-gray-900 mb-1">{currentUser.name}</h2>
-                  <p className="text-gray-500 text-sm mb-4">@{currentUser.username}</p>
+                  <h2 className="font-bold text-xl text-gray-900 dark:text-white mb-1">{currentUser.name}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">@{currentUser.username}</p>
                   
                   <div className="flex justify-center gap-6 mb-6 text-sm">
                     <div className="text-center">
-                      <div className="font-bold text-gray-900">{currentUser.followers}</div>
+                      <div className="font-bold text-gray-900 dark:text-white">{currentUser.followers}</div>
                       <div className="text-gray-400 text-xs">متابِع</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-bold text-gray-900">{currentUser.following}</div>
+                      <div className="font-bold text-gray-900 dark:text-white">{currentUser.following}</div>
                       <div className="text-gray-400 text-xs">متابَع</div>
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm text-gray-600 text-right mb-6">
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400 text-right mb-6">
                     {currentUser.job && <div className="flex items-center gap-2"><Briefcase size={16} /> {currentUser.job}</div>}
                     {currentUser.country && <div className="flex items-center gap-2"><MapPin size={16} /> {currentUser.country}</div>}
                   </div>
 
-                  <button onClick={() => setView('profile')} className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors">
+                  <button onClick={() => setView('profile')} className="w-full py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
                     الملف الشخصي
                   </button>
                 </div>
@@ -946,7 +972,7 @@ function App() {
             <div className="flex-1 min-w-0">
               {/* Profile View Header */}
               {(view === 'profile' || view === 'user_profile') && (
-                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 animate-fade-in">
+                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 animate-fade-in transition-colors">
                     <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600 relative">
                       {/* Cover Photo */}
                     </div>
@@ -955,12 +981,12 @@ function App() {
                          <img 
                            src={view === 'profile' ? currentUser.avatar : viewedUser?.avatar} 
                            alt="Profile" 
-                           className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover"
+                           className="w-24 h-24 rounded-full border-4 border-white dark:border-gray-800 shadow-md object-cover"
                          />
                          {view === 'profile' ? (
                            <button 
                              onClick={handleEditProfile}
-                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center gap-2"
+                             className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
                            >
                              <Edit2 size={16} />
                              تعديل
@@ -969,7 +995,7 @@ function App() {
                            <div className="flex gap-2">
                               <button 
                                 onClick={() => viewedUser && handleMessageUser(viewedUser)}
-                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center gap-2"
+                                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
                               >
                                 <MessageCircle size={16} />
                                 مراسلة
@@ -977,7 +1003,7 @@ function App() {
                               {viewedUser && followedUsersIds.includes(viewedUser.id) ? (
                                 <button 
                                   onClick={() => viewedUser && handleUnfollowClick(viewedUser)}
-                                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-red-50 hover:text-red-600 transition-colors flex items-center gap-2 group"
+                                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors flex items-center gap-2 group"
                                 >
                                   <UserCheck size={16} className="group-hover:hidden" />
                                   <UserMinus size={16} className="hidden group-hover:block" />
@@ -998,28 +1024,28 @@ function App() {
                       </div>
                       
                       <div className="text-center md:text-right">
-                         <h2 className="text-2xl font-bold text-gray-900">
+                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                            {view === 'profile' ? currentUser.name : viewedUser?.name}
                          </h2>
-                         <p className="text-gray-500 text-sm mb-2">
+                         <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
                            @{view === 'profile' ? currentUser.username : viewedUser?.username}
                          </p>
-                         <p className="text-gray-700 mb-4">
+                         <p className="text-gray-700 dark:text-gray-300 mb-4">
                            {view === 'profile' ? currentUser.bio : viewedUser?.bio}
                          </p>
                          
                          {/* User Stats in Profile Header */}
-                         <div className="flex justify-center md:justify-start gap-6 text-sm border-t border-gray-50 pt-4">
+                         <div className="flex justify-center md:justify-start gap-6 text-sm border-t border-gray-50 dark:border-gray-700 pt-4">
                             <div className="flex items-center gap-1">
-                              <span className="font-bold text-gray-900">{view === 'profile' ? currentUser.followers : viewedUser?.followers}</span>
-                              <span className="text-gray-500">متابِع</span>
+                              <span className="font-bold text-gray-900 dark:text-white">{view === 'profile' ? currentUser.followers : viewedUser?.followers}</span>
+                              <span className="text-gray-500 dark:text-gray-400">متابِع</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className="font-bold text-gray-900">{view === 'profile' ? currentUser.following : viewedUser?.following}</span>
-                              <span className="text-gray-500">متابَع</span>
+                              <span className="font-bold text-gray-900 dark:text-white">{view === 'profile' ? currentUser.following : viewedUser?.following}</span>
+                              <span className="text-gray-500 dark:text-gray-400">متابَع</span>
                             </div>
                             {(view === 'profile' ? currentUser.country : viewedUser?.country) && (
-                              <div className="flex items-center gap-1 text-gray-500">
+                              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                                 <MapPin size={14} />
                                 <span>{view === 'profile' ? currentUser.country : viewedUser?.country}</span>
                               </div>
@@ -1065,7 +1091,7 @@ function App() {
                     />
                   ))
                 ) : (
-                  <div className="text-center py-10 text-gray-500">
+                  <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'لا توجد نتائج للبحث' : 'لا توجد منشورات حالياً'}
                   </div>
                 )}
@@ -1076,10 +1102,10 @@ function App() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-40 safe-area-bottom transition-colors">
         <button 
           onClick={() => { setView('home'); window.scrollTo(0,0); }}
-          className={`flex flex-col items-center gap-1 ${view === 'home' ? 'text-blue-600' : 'text-gray-400'}`}
+          className={`flex flex-col items-center gap-1 ${view === 'home' ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <Home size={24} strokeWidth={view === 'home' ? 2.5 : 2} />
           <span className="text-[10px] font-medium">الرئيسية</span>
@@ -1087,7 +1113,7 @@ function App() {
         
         <button 
            onClick={() => { setView('profile'); window.scrollTo(0,0); }}
-           className={`flex flex-col items-center gap-1 ${view === 'profile' ? 'text-blue-600' : 'text-gray-400'}`}
+           className={`flex flex-col items-center gap-1 ${view === 'profile' ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <UserIcon size={24} strokeWidth={view === 'profile' ? 2.5 : 2} />
           <span className="text-[10px] font-medium">ملفي</span>
@@ -1095,7 +1121,7 @@ function App() {
 
         <button 
            onClick={() => { setView('chat'); setCurrentChatUser(null); }}
-           className={`flex flex-col items-center gap-1 ${view === 'chat' ? 'text-blue-600' : 'text-gray-400'}`}
+           className={`flex flex-col items-center gap-1 ${view === 'chat' ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <MessageSquare size={24} strokeWidth={view === 'chat' ? 2.5 : 2} />
           <span className="text-[10px] font-medium">الرسائل</span>
@@ -1104,17 +1130,83 @@ function App() {
 
       {/* --- MODALS --- */}
       
+      {/* Help & Support Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 transform scale-100 animate-in zoom-in-95 flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <HelpCircle size={24} className="text-blue-600" />
+                المساعدة والدعم
+              </h3>
+              <button onClick={() => setShowHelpModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
+              <h4 className="font-bold text-gray-800 dark:text-white mb-3">الأسئلة الشائعة</h4>
+              <div className="space-y-3 mb-6">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <details className="group">
+                    <summary className="flex cursor-pointer items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium">
+                      كيف يمكنني تغيير كلمة المرور؟
+                      <span className="ml-2 shrink-0 transition duration-300 group-open:-rotate-180">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    </summary>
+                    <div className="p-4 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+                      يمكنك تغيير كلمة المرور بالذهاب إلى الإعدادات > الأمان > تغيير كلمة المرور.
+                    </div>
+                  </details>
+                </div>
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <details className="group">
+                    <summary className="flex cursor-pointer items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium">
+                      كيف يمكنني حظر مستخدم مزعج؟
+                      <span className="ml-2 shrink-0 transition duration-300 group-open:-rotate-180">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    </summary>
+                    <div className="p-4 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+                      من أي منشور للمستخدم، اضغط على النقاط الثلاث واختر "حظر المستخدم". يمكنك إدارة المحظورين من إعدادات الخصوصية.
+                    </div>
+                  </details>
+                </div>
+              </div>
+
+              <h4 className="font-bold text-gray-800 dark:text-white mb-3">تواصل معنا</h4>
+              <form onSubmit={(e) => { e.preventDefault(); showToast("تم إرسال رسالتك للدعم الفني"); setShowHelpModal(false); }} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الموضوع</label>
+                  <input type="text" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الرسالة</label>
+                  <textarea className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows={4} required></textarea>
+                </div>
+                <button type="submit" className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">إرسال</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Logout Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 animate-in zoom-in-95">
-            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-100 animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <LogOut size={32} />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">تسجيل الخروج</h3>
-            <p className="text-gray-500 mb-6">هل أنت متأكد أنك تريد تسجيل الخروج من الحساب؟</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">تسجيل الخروج</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">هل أنت متأكد أنك تريد تسجيل الخروج من الحساب؟</p>
             <div className="flex gap-3">
-              <button onClick={() => setShowLogoutModal(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">إلغاء</button>
+              <button onClick={() => setShowLogoutModal(false)} className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">إلغاء</button>
               <button onClick={confirmLogout} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">خروج</button>
             </div>
           </div>
@@ -1124,11 +1216,11 @@ function App() {
       {/* Delete Post Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <h3 className="text-xl font-bold text-gray-900 mb-2">حذف المنشور</h3>
-             <p className="text-gray-500 mb-6">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
+           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">حذف المنشور</h3>
+             <p className="text-gray-500 dark:text-gray-400 mb-6">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
              <div className="flex gap-3">
-               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
                <button onClick={confirmDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">حذف</button>
              </div>
            </div>
@@ -1138,14 +1230,14 @@ function App() {
       {/* Follow Modal */}
       {showFollowModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-blue-100">
+           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-blue-100 dark:border-blue-900">
                 <img src={userToFollow?.avatar} alt="" className="w-full h-full object-cover" />
              </div>
-             <h3 className="text-xl font-bold text-gray-900 mb-2">متابعة {userToFollow?.name}؟</h3>
-             <p className="text-gray-500 mb-6">ستظهر منشورات هذا المستخدم في صفحتك الرئيسية.</p>
+             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">متابعة {userToFollow?.name}؟</h3>
+             <p className="text-gray-500 dark:text-gray-400 mb-6">ستظهر منشورات هذا المستخدم في صفحتك الرئيسية.</p>
              <div className="flex gap-3">
-               <button onClick={() => setShowFollowModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={() => setShowFollowModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
                <button onClick={confirmFollow} className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-medium">متابعة</button>
              </div>
            </div>
@@ -1155,14 +1247,14 @@ function App() {
       {/* Unfollow Modal */}
       {showUnfollowModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-red-100 grayscale">
+           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-red-100 dark:border-red-900 grayscale">
                 <img src={userToUnfollow?.avatar} alt="" className="w-full h-full object-cover" />
              </div>
-             <h3 className="text-xl font-bold text-gray-900 mb-2">إلغاء متابعة {userToUnfollow?.name}؟</h3>
-             <p className="text-gray-500 mb-6">لن ترى منشورات هذا المستخدم في صفحتك الرئيسية بعد الآن.</p>
+             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">إلغاء متابعة {userToUnfollow?.name}؟</h3>
+             <p className="text-gray-500 dark:text-gray-400 mb-6">لن ترى منشورات هذا المستخدم في صفحتك الرئيسية بعد الآن.</p>
              <div className="flex gap-3">
-               <button onClick={() => setShowUnfollowModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={() => setShowUnfollowModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
                <button onClick={confirmUnfollow} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">إلغاء المتابعة</button>
              </div>
            </div>
@@ -1172,14 +1264,14 @@ function App() {
       {/* Block Modal */}
       {showBlockModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
                <Ban size={32} />
              </div>
-             <h3 className="text-xl font-bold text-gray-900 mb-2">حظر {userToBlock?.name}</h3>
-             <p className="text-gray-500 mb-6">لن يتمكن هذا المستخدم من رؤية ملفك الشخصي أو التفاعل معك. سيتم إخفاء محتواه من صفحتك.</p>
+             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">حظر {userToBlock?.name}</h3>
+             <p className="text-gray-500 dark:text-gray-400 mb-6">لن يتمكن هذا المستخدم من رؤية ملفك الشخصي أو التفاعل معك. سيتم إخفاء محتواه من صفحتك.</p>
              <div className="flex gap-3">
-               <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
                <button onClick={confirmBlock} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-medium">حظر</button>
              </div>
            </div>
@@ -1189,14 +1281,14 @@ function App() {
       {/* Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-             <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+             <div className="w-16 h-16 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center mx-auto mb-4">
                <Flag size={32} />
              </div>
-             <h3 className="text-xl font-bold text-gray-900 mb-2">الإبلاغ عن محتوى</h3>
-             <p className="text-gray-500 mb-6">هل أنت متأكد أنك تريد الإبلاغ عن هذا المنشور؟ سيتم مراجعته من قبل الإدارة.</p>
+             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">الإبلاغ عن محتوى</h3>
+             <p className="text-gray-500 dark:text-gray-400 mb-6">هل أنت متأكد أنك تريد الإبلاغ عن هذا المنشور؟ سيتم مراجعته من قبل الإدارة.</p>
              <div className="flex gap-3">
-               <button onClick={() => setShowReportModal(false)} className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium">إلغاء</button>
+               <button onClick={() => setShowReportModal(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium">إلغاء</button>
                <button onClick={confirmReport} className="flex-1 py-2 bg-orange-600 text-white rounded-xl font-medium">إبلاغ</button>
              </div>
            </div>
@@ -1206,10 +1298,10 @@ function App() {
       {/* Edit Profile Modal */}
       {showEditProfileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 my-10">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 my-10">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">تعديل الملف الشخصي</h3>
-              <button onClick={() => setShowEditProfileModal(false)} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">تعديل الملف الشخصي</h3>
+              <button onClick={() => setShowEditProfileModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 <X size={24} />
               </button>
             </div>
@@ -1218,63 +1310,63 @@ function App() {
               {/* Avatar Upload Simulation */}
               <div className="flex flex-col items-center mb-4">
                 <div className="relative group cursor-pointer">
-                  <img src={editFormData.avatar || currentUser.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-gray-200" />
+                  <img src={editFormData.avatar || currentUser.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />
                   <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="text-white" />
                   </div>
                 </div>
-                <span className="text-xs text-blue-600 mt-2 font-medium">تغيير الصورة</span>
+                <span className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">تغيير الصورة</span>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الاسم</label>
                 <input 
                   type="text" 
                   value={editFormData.name || ''} 
                   onChange={e => setEditFormData({...editFormData, name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">اسم المستخدم</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم المستخدم</label>
                 <input 
                   type="text" 
                   value={editFormData.username || ''} 
                   onChange={e => setEditFormData({...editFormData, username: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الدولة</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدولة</label>
                 <input 
                   type="text" 
                   value={editFormData.country || ''} 
                   onChange={e => setEditFormData({...editFormData, country: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الوظيفة</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الوظيفة</label>
                 <input 
                   type="text" 
                   value={editFormData.job || ''} 
                   onChange={e => setEditFormData({...editFormData, job: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">النبذة التعريفية</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">النبذة التعريفية</label>
                 <textarea 
                   value={editFormData.bio || ''} 
                   onChange={e => setEditFormData({...editFormData, bio: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   rows={3}
                 />
               </div>
               
               <button 
                 onClick={saveProfileChanges}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors mt-4 shadow-lg shadow-blue-200"
+                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors mt-4 shadow-lg shadow-blue-200 dark:shadow-none"
               >
                 حفظ التغييرات
               </button>

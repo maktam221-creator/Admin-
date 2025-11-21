@@ -69,7 +69,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   };
 
   return (
-    <article className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-visible animate-fade-in relative">
+    <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-4 overflow-visible animate-fade-in relative transition-colors">
       {/* Post Header */}
       <div className="p-4 flex items-center justify-between">
         <div 
@@ -79,26 +79,26 @@ export const PostCard: React.FC<PostCardProps> = ({
           <img 
             src={post.user.avatar} 
             alt={post.user.name} 
-            className="w-10 h-10 rounded-full object-cover border border-gray-200 group-hover:border-blue-400 transition-colors"
+            className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600 group-hover:border-blue-400 transition-colors"
           />
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-gray-900 text-sm md:text-base group-hover:text-blue-600 transition-colors">{post.user.name}</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm md:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{post.user.name}</h3>
               {isRepost && (
-                <span className="text-xs text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                   <Repeat size={12} />
                   عاد النشر
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500">{formatDate(post.timestamp)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(post.timestamp)}</p>
           </div>
         </div>
         
         <div className="relative">
           <button 
             onClick={() => setShowMenu(!showMenu)}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-50 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <MoreHorizontal size={20} />
           </button>
@@ -109,19 +109,19 @@ export const PostCard: React.FC<PostCardProps> = ({
                 className="fixed inset-0 z-10" 
                 onClick={() => setShowMenu(false)} 
               />
-              <div className="absolute left-0 top-full mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute left-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                 {isOwner ? (
                   <>
                     <button 
                       onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-200 transition-colors"
                     >
                       <Edit2 size={16} />
                       تعديل
                     </button>
                     <button 
                       onClick={() => { setShowMenu(false); onDelete(post.id); }}
-                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50"
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50 dark:border-gray-700"
                     >
                       <Trash2 size={16} />
                       حذف
@@ -131,14 +131,14 @@ export const PostCard: React.FC<PostCardProps> = ({
                   <>
                     <button 
                       onClick={() => { setShowMenu(false); onReport(post); }}
-                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-orange-50 text-orange-600 flex items-center gap-2 transition-colors"
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 text-orange-600 flex items-center gap-2 transition-colors"
                     >
                       <Flag size={16} />
                       إبلاغ
                     </button>
                     <button 
                       onClick={() => { setShowMenu(false); onBlock(post.user); }}
-                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50"
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50 dark:border-gray-700"
                     >
                       <Ban size={16} />
                       حظر المستخدم
@@ -158,14 +158,14 @@ export const PostCard: React.FC<PostCardProps> = ({
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full p-3 min-h-[120px] border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-blue-50/30 text-base"
+              className="w-full p-3 min-h-[120px] border border-blue-200 dark:border-blue-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-blue-50/30 dark:bg-blue-900/20 text-base text-gray-900 dark:text-gray-100"
               dir="auto"
               autoFocus
             />
             <div className="flex justify-end gap-2 mt-3">
               <button 
                 onClick={handleCancelEdit}
-                className="px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1 transition-colors"
+                className="px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-1 transition-colors"
               >
                 <X size={16} />
                 إلغاء
@@ -182,14 +182,14 @@ export const PostCard: React.FC<PostCardProps> = ({
         ) : (
           <>
             {post.content && (
-              <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap mb-2" dir="auto">
+              <p className="text-gray-800 dark:text-gray-200 text-base leading-relaxed whitespace-pre-wrap mb-2" dir="auto">
                 {post.content}
               </p>
             )}
             
             {/* Reposted Content */}
             {isRepost && post.originalPost && (
-              <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/50 mt-2 hover:bg-gray-50 transition-colors cursor-pointer">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-gray-50/50 dark:bg-gray-700/50 mt-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                 <div 
                   className="flex items-center gap-2 mb-2" 
                   onClick={(e) => {
@@ -200,14 +200,14 @@ export const PostCard: React.FC<PostCardProps> = ({
                   <img 
                     src={post.originalPost.user.avatar} 
                     alt={post.originalPost.user.name} 
-                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
                   />
                   <div>
-                    <h4 className="font-bold text-sm text-gray-900">{post.originalPost.user.name}</h4>
-                    <span className="text-[10px] text-gray-500">{formatDate(post.originalPost.timestamp)}</span>
+                    <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">{post.originalPost.user.name}</h4>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatDate(post.originalPost.timestamp)}</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
                   {post.originalPost.content}
                 </p>
                 {post.originalPost.image && (
@@ -231,13 +231,13 @@ export const PostCard: React.FC<PostCardProps> = ({
           <img 
             src={post.image} 
             alt="Post content" 
-            className="w-full h-auto max-h-[500px] object-cover bg-gray-50"
+            className="w-full h-auto max-h-[500px] object-cover bg-gray-50 dark:bg-gray-900"
           />
         </div>
       )}
 
       {/* Post Stats */}
-      <div className="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-b border-gray-50 mt-2">
+      <div className="px-4 py-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 border-b border-gray-50 dark:border-gray-700 mt-2">
         <div className="flex gap-1">
           {post.likes > 0 && <span>{post.likes} إعجاب</span>}
         </div>
@@ -251,8 +251,8 @@ export const PostCard: React.FC<PostCardProps> = ({
       <div className="flex items-center justify-between px-2 py-1">
         <button 
           onClick={() => onLike(post.id)}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors ${
-            post.isLiked ? 'text-red-500' : 'text-gray-600'
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+            post.isLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-300'
           }`}
         >
           <Heart size={20} fill={post.isLiked ? "currentColor" : "none"} />
@@ -261,7 +261,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         
         <button 
           onClick={() => setShowComments(!showComments)}
-          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
         >
           <MessageCircle size={20} />
           <span className="hidden sm:inline font-medium text-sm">تعليق</span>
@@ -269,7 +269,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
         <button 
           onClick={() => onRepost(post.id)}
-          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
         >
           <Repeat size={20} />
           <span className="hidden sm:inline font-medium text-sm">إعادة نشر</span>
@@ -277,7 +277,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         
         <button 
           onClick={() => onShare(post.id)}
-          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
         >
           <Share2 size={20} />
           <span className="hidden sm:inline font-medium text-sm">مشاركة</span>
@@ -286,7 +286,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {/* Comments Section */}
       {showComments && (
-        <div className="bg-gray-50 p-4 border-t border-gray-100">
+        <div className="bg-gray-50 dark:bg-gray-700/30 p-4 border-t border-gray-100 dark:border-gray-700">
           {/* Comment Input */}
           <form onSubmit={handleCommentSubmit} className="flex items-center gap-2 mb-4">
             <img 
@@ -300,12 +300,12 @@ export const PostCard: React.FC<PostCardProps> = ({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="اكتب تعليقاً..."
-                className="w-full px-4 py-2 pl-10 rounded-full border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                className="w-full px-4 py-2 pl-10 rounded-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
               />
               <button 
                 type="submit"
                 disabled={!newComment.trim()}
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-blue-600 disabled:text-gray-400"
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-blue-600 disabled:text-gray-400 dark:disabled:text-gray-500"
               >
                 <Send size={16} />
               </button>
@@ -322,17 +322,17 @@ export const PostCard: React.FC<PostCardProps> = ({
                   className="w-8 h-8 rounded-full object-cover mt-1"
                   onClick={() => onUserClick(comment.user)}
                 />
-                <div className="bg-white p-3 rounded-2xl rounded-tr-none shadow-sm border border-gray-100 flex-1">
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-tr-none shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <span 
-                      className="font-bold text-xs text-gray-900 cursor-pointer hover:text-blue-600"
+                      className="font-bold text-xs text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
                       onClick={() => onUserClick(comment.user)}
                     >
                       {comment.user.name}
                     </span>
                     <span className="text-[10px] text-gray-400">{formatDate(comment.timestamp)}</span>
                   </div>
-                  <p className="text-sm text-gray-700">{comment.text}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{comment.text}</p>
                 </div>
               </div>
             ))}
