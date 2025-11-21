@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2, Edit2, X, Check, Repeat } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2, Edit2, X, Check, Repeat, Ban, Flag } from 'lucide-react';
 import { Post, User } from '../types';
 
 interface PostCardProps {
@@ -13,6 +13,8 @@ interface PostCardProps {
   onEdit: (postId: string, newContent: string) => void;
   onRepost: (postId: string) => void;
   onUserClick: (user: User) => void;
+  onBlock: (user: User) => void;
+  onReport: (post: Post) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ 
@@ -25,7 +27,9 @@ export const PostCard: React.FC<PostCardProps> = ({
   onDelete,
   onEdit,
   onRepost,
-  onUserClick
+  onUserClick,
+  onBlock,
+  onReport
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -91,41 +95,60 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
         </div>
         
-        {isOwner && (
-          <div className="relative">
-            <button 
-              onClick={() => setShowMenu(!showMenu)}
-              className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-50 transition-colors"
-            >
-              <MoreHorizontal size={20} />
-            </button>
-            
-            {showMenu && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowMenu(false)} 
-                />
-                <div className="absolute left-0 top-full mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                  <button 
-                    onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                    className="w-full text-right px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
-                  >
-                    <Edit2 size={16} />
-                    تعديل
-                  </button>
-                  <button 
-                    onClick={() => { setShowMenu(false); onDelete(post.id); }}
-                    className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50"
-                  >
-                    <Trash2 size={16} />
-                    حذف
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        <div className="relative">
+          <button 
+            onClick={() => setShowMenu(!showMenu)}
+            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-50 transition-colors"
+          >
+            <MoreHorizontal size={20} />
+          </button>
+          
+          {showMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setShowMenu(false)} 
+              />
+              <div className="absolute left-0 top-full mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                {isOwner ? (
+                  <>
+                    <button 
+                      onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                    >
+                      <Edit2 size={16} />
+                      تعديل
+                    </button>
+                    <button 
+                      onClick={() => { setShowMenu(false); onDelete(post.id); }}
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50"
+                    >
+                      <Trash2 size={16} />
+                      حذف
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => { setShowMenu(false); onReport(post); }}
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-orange-50 text-orange-600 flex items-center gap-2 transition-colors"
+                    >
+                      <Flag size={16} />
+                      إبلاغ
+                    </button>
+                    <button 
+                      onClick={() => { setShowMenu(false); onBlock(post.user); }}
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors border-t border-gray-50"
+                    >
+                      <Ban size={16} />
+                      حظر المستخدم
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Post Content */}

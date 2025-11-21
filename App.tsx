@@ -8,7 +8,7 @@ import {
   Bell, Menu, Home, User as UserIcon, AlertTriangle, Search, 
   UserPlus, UserMinus, Check, Heart, MessageCircle, Share2, 
   MapPin, Briefcase, GraduationCap, Camera, X, MessageSquare, ChevronRight,
-  Filter, Settings, LogOut, Moon, Shield, Lock, Info, ChevronLeft, Smartphone, Mail, Eye, EyeOff, Globe, HelpCircle
+  Filter, Settings, LogOut, Moon, Shield, Lock, Info, ChevronLeft, Smartphone, Mail, Eye, EyeOff, Globe, HelpCircle, Ban, Flag
 } from 'lucide-react';
 
 // Initial Mock Data for Current User
@@ -153,6 +153,7 @@ const App: React.FC = () => {
   
   // Interaction State
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [postToReport, setPostToReport] = useState<Post | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState<'content' | 'author' | 'date'>('content');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -163,11 +164,12 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [showNotifications, setShowNotifications] = useState(false);
   
-  // Follow logic states
+  // Follow & Block logic states
   const [followedUsers, setFollowedUsers] = useState<string[]>([]);
   const [showFollowModal, setShowFollowModal] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [userToBlock, setUserToBlock] = useState<User | null>(null);
 
   // Edit Profile State
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
@@ -319,6 +321,36 @@ const App: React.FC = () => {
       return post;
     }));
     showToast('تم تعديل المنشور بنجاح');
+  };
+
+  const handleBlockClick = (user: User) => {
+    setUserToBlock(user);
+  };
+
+  const confirmBlock = () => {
+    if (userToBlock) {
+      setPosts(posts.filter(p => p.user.id !== userToBlock.id));
+      if (followedUsers.includes(userToBlock.id)) {
+        setFollowedUsers(followedUsers.filter(id => id !== userToBlock.id));
+        setCurrentUser(prev => ({ ...prev, following: prev.following - 1 }));
+      }
+      showToast(`تم حظر ${userToBlock.name}`);
+      setUserToBlock(null);
+      if (view === 'user_profile' && viewedUser?.id === userToBlock.id) {
+        setView('home');
+      }
+    }
+  };
+
+  const handleReportClick = (post: Post) => {
+    setPostToReport(post);
+  };
+
+  const confirmReport = () => {
+    if (postToReport) {
+      showToast('تم استلام البلاغ، شكراً لمساعدتك في الحفاظ على مجتمعنا آمنًا.');
+      setPostToReport(null);
+    }
   };
 
   // User Navigation & Follow
@@ -706,6 +738,8 @@ const App: React.FC = () => {
                   onEdit={handleEditPost}
                   onRepost={handleRepost}
                   onUserClick={handleUserClick}
+                  onBlock={handleBlockClick}
+                  onReport={handleReportClick}
                 />
               ))
             )}
@@ -815,6 +849,8 @@ const App: React.FC = () => {
                         onEdit={handleEditPost}
                         onRepost={handleRepost}
                         onUserClick={handleUserClick}
+                        onBlock={handleBlockClick}
+                        onReport={handleReportClick}
                      />
                    ))
                )}
@@ -915,6 +951,8 @@ const App: React.FC = () => {
                         onEdit={handleEditPost}
                         onRepost={handleRepost}
                         onUserClick={handleUserClick}
+                        onBlock={handleBlockClick}
+                        onReport={handleReportClick}
                      />
                    ))
                )}
@@ -1307,6 +1345,40 @@ const App: React.FC = () => {
             <div className="flex gap-3">
               <button onClick={() => setShowUnfollowModal(false)} className="flex-1 py-2.5 bg-gray-100 rounded-xl font-medium hover:bg-gray-200">تراجع</button>
               <button onClick={confirmUnfollow} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700">إلغاء المتابعة</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block User Confirmation Modal */}
+      {userToBlock && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+               <Ban size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">حظر {userToBlock.name}؟</h3>
+            <p className="text-gray-500 mb-6">لن يتمكن هذا المستخدم من رؤية منشوراتك أو التفاعل معك، وسيتم إخفاء منشوراته من صفحتك.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setUserToBlock(null)} className="flex-1 py-2.5 bg-gray-100 rounded-xl font-medium hover:bg-gray-200">إلغاء</button>
+              <button onClick={confirmBlock} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700">حظر المستخدم</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Post Confirmation Modal */}
+      {postToReport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+               <Flag size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">إبلاغ عن منشور؟</h3>
+            <p className="text-gray-500 mb-6">هل تعتقد أن هذا المنشور ينتهك معايير مجتمعنا؟ سيتم مراجعته من قبل المشرفين.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setPostToReport(null)} className="flex-1 py-2.5 bg-gray-100 rounded-xl font-medium hover:bg-gray-200">إلغاء</button>
+              <button onClick={confirmReport} className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700">إبلاغ</button>
             </div>
           </div>
         </div>
